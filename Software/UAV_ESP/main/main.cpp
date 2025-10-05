@@ -1,17 +1,7 @@
-/* ESP32 无人机通信示例
- * 
- * 简单的无人机和上位机通信例子
- * 无人机连接WIFI后，通过UDP和上位机通信
- */
+#include "main.h"
 
-#include <stdio.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_log.h"
-#include "../Hardware/WIFI/WIFI.h"
-#include "../Hardware/UDP/UDP.h"
 
-static const char *TAG = "MAIN";
+
 
 extern "C" int app_main(void)
 {
