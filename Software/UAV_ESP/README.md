@@ -1,69 +1,87 @@
-| Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C6 | ESP32-H2 | ESP32-P4 | ESP32-S2 | ESP32-S3 |
-| ----------------- | ----- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
+# UAV_ESP - 无人机控制系统
 
-# Blink Example
+基于ESP32-S3的无人机飞控系统，支持WIFI通信、多传感器融合、卡尔曼滤波和PID控制。
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+## 📋 目录
 
-This example demonstrates how to blink a LED by using the GPIO driver or using the [led_strip](https://components.espressif.com/component/espressif/led_strip) library if the LED is addressable e.g. [WS2812](https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf). The `led_strip` library is installed via [component manager](main/idf_component.yml).
+- [项目概述](#项目概述)
+- [系统架构](#系统架构)
+- [硬件支持](#硬件支持)
+- [核心算法](#核心算法)
 
-## How to Use Example
 
-Before project configuration and build, be sure to set the correct chip target using `idf.py set-target <chip_name>`.
+## 🎯 项目概述
 
-### Hardware Required
+本项目是DroneSwarm无人机集群系统的核心飞控部分，基于ESP32-S3微控制器开发。系统集成了多种传感器和执行器，实现了无人机的姿态控制、位置估计和无线通信功能。
 
-* A development board with normal LED or addressable LED on-board (e.g., ESP32-S3-DevKitC, ESP32-C6-DevKitC etc.)
-* A USB cable for Power supply and programming
+### 主要特性
 
-See [Development Boards](https://www.espressif.com/en/products/devkits) for more information about it.
+- **无线通信**: 支持WIFI和UDP通信，可与地面站实时数据交换
+- **多传感器融合**: 集成MPU6050、JY60姿态传感器和GPS定位
+- **智能滤波**: 6维卡尔曼滤波器实现位置和姿态的精确估计
+- **精确控制**: PID控制算法确保飞行稳定性
+- **模块化设计**: 硬件抽象层便于扩展和维护
+- **实时显示**: OLED屏幕显示飞行状态
 
-### Configure the Project
+## 🏗️ 系统架构
 
-Open the project configuration menu (`idf.py menuconfig`).
-
-In the `Example Configuration` menu:
-
-* Select the LED type in the `Blink LED type` option.
-  * Use `GPIO` for regular LED
-  * Use `LED strip` for addressable LED
-* If the LED type is `LED strip`, select the backend peripheral
-  * `RMT` is only available for ESP targets with RMT peripheral supported
-  * `SPI` is available for all ESP targets
-* Set the GPIO number used for the signal in the `Blink GPIO number` option.
-* Set the blinking period in the `Blink period in ms` option.
-
-### Build and Flash
-
-Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
-
-(To exit the serial monitor, type ``Ctrl-]``.)
-
-See the [Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for full steps to configure and use ESP-IDF to build projects.
-
-## Example Output
-
-As you run the example, you will see the LED blinking, according to the previously defined period. For the addressable LED, you can also change the LED color by setting the `led_strip_set_pixel(led_strip, 0, 16, 16, 16);` (LED Strip, Pixel Number, Red, Green, Blue) with values from 0 to 255 in the [source file](main/blink_example_main.c).
-
-```text
-I (315) example: Example configured to blink addressable LED!
-I (325) example: Turning the LED OFF!
-I (1325) example: Turning the LED ON!
-I (2325) example: Turning the LED OFF!
-I (3325) example: Turning the LED ON!
-I (4325) example: Turning the LED OFF!
-I (5325) example: Turning the LED ON!
-I (6325) example: Turning the LED OFF!
-I (7325) example: Turning the LED ON!
-I (8325) example: Turning the LED OFF!
+```
+UAV_ESP/
+├── main/                   # 主程序入口
+│   ├── main.cpp           # 主函数，系统初始化和通信循环
+│   └── main.h             # 头文件定义
+├── Hardware/              # 硬件抽象层
+│   ├── WIFI/             # WIFI连接管理
+│   ├── UDP/              # UDP通信协议
+│   ├── MPU6050/          # 6轴陀螺仪加速度计
+│   ├── JY60/             # 姿态传感器
+│   ├── GPS/              # GPS定位模块
+│   ├── control/          # 电机控制
+│   ├── PWM/              # PWM信号输出
+│   ├── OLED/             # OLED显示屏
+│   ├── LED/              # LED指示灯
+│   ├── buzzer/           # 蜂鸣器
+│   ├── bluetooth/        # 蓝牙通信
+│   └── TIME/             # 时间管理
+├── System/               # 系统算法层
+│   ├── Kalman/           # 卡尔曼滤波器
+│   ├── PID/              # PID控制器
+│   ├── delay/            # 延时函数
+│   └── sys/              # 系统配置
+└── test/                 # 测试工具
+    ├── debug_network.md  # 网络调试说明
+    └── udp_server_test.py # UDP服务器测试脚本
 ```
 
-Note: The color order could be different according to the LED model.
+## 🔧 硬件支持
 
-The pixel number indicates the pixel position in the LED strip. For a single LED, use 0.
+### 主控芯片
+- **ESP32-S3**: 主控制器，支持WIFI和蓝牙
 
-## Troubleshooting
+### 传感器模块
+- **MPU6050**: 6轴陀螺仪+加速度计，提供姿态数据
+- **JY60**: 姿态传感器，提供额外的姿态参考
+- **GPS模块**: 提供位置信息
 
-* If the LED isn't blinking, check the GPIO or the LED type selection in the `Example Configuration` menu.
+### 执行器
+- **PWM输出**: 控制电机转速
+- **LED指示灯**: 状态指示
+- **蜂鸣器**: 声音提示
 
-For any technical queries, please open an [issue](https://github.com/espressif/esp-idf/issues) on GitHub. We will get back to you soon.
+### 显示设备
+- **OLED屏幕**: 显示飞行状态和系统信息
+
+## 🧮 核心算法
+
+### 卡尔曼滤波器 (Kalman Filter)
+- **状态维度**: 6维 [x, y, z, yaw, pitch, roll]
+- **功能**: 融合多传感器数据，提供精确的位置和姿态估计
+- **特点**: 
+  - 实时预测和更新
+  - 噪声抑制
+  - 状态协方差跟踪
+
+### PID控制器
+- **控制对象**: 无人机姿态和位置
+- **参数**: 比例(P)、积分(I)、微分(D)
+- **功能**: 确保飞行稳定性和响应精度
