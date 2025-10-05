@@ -142,25 +142,6 @@ const char* WIFI::get_ip_address()
     return ip_str;
 }
 
-//  ================ 设置新的SSID和密码并重连 ================
-void WIFI::set_credentials(const char* new_ssid, const char* new_password)
-{
-    ssid = new_ssid;
-    password = new_password;
-    ESP_LOGI(TAG, "更新WIFI凭据并重连: %s", ssid);
-    
-    // 断开当前连接
-    esp_wifi_disconnect();
-    
-    // 重新配置
-    wifi_config_t wifi_config = {};
-    strcpy((char*)wifi_config.sta.ssid, ssid);
-    strcpy((char*)wifi_config.sta.password, password);
-    wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
-    
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-    esp_wifi_connect();
-}
 
 //  ================发送一个字节（byte）数据===============
 void WIFI::send_byte(uint8_t data)

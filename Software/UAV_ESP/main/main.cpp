@@ -33,9 +33,7 @@ extern "C" int app_main(void)
         ESP_LOGE(TAG, "UDP连接失败");
         return -1;
     }
-    
-    ESP_LOGI(TAG, "UDP连接成功，开始通信");
-    
+        
     // 第三步：主循环 - 收发数据
     uint8_t send_data[10];
     uint8_t receive_buffer[255];

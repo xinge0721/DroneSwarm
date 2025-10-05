@@ -12,37 +12,26 @@
 
 class UDP {
 private:
-    int socket_fd;
+    // 套接字文件描述符
+    int socket_fd = -1;
+    // 服务器地址结构
     struct sockaddr_in server_addr;
-    struct sockaddr_in client_addr;
-    socklen_t client_addr_len;
-    bool is_server;
-    bool is_connected;
+    // 连接状态标志
+    bool is_connected = false;
 
 public:
     // 构造函数
-    UDP();
+    UDP(const char* server_ip = "192.168.0.102", uint16_t port = 8888);
     
     // 析构函数
     ~UDP();
     
-    // 启动UDP服务器（上位机用）
-    bool start_server(uint16_t port);
-    
-    // 连接UDP服务器（无人机用）
-    bool connect_server(const char* server_ip, uint16_t port);
-    
-    // 发送数据
+    // 发送数据到服务器
     bool send_data(uint8_t* data, uint8_t length);
     
-    // 接收数据（非阻塞）
+    // 从服务器接收数据（非阻塞）
     int receive_data(uint8_t* buffer, uint8_t max_length);
     
-    // 检查连接状态
-    bool is_udp_connected();
-    
-    // 关闭连接
-    void close_connection();
 };
 
 #endif // UDP_H

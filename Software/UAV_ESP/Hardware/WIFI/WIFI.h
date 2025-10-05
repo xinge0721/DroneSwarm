@@ -35,9 +35,6 @@ public:
     // 获取IP地址
     const char* get_ip_address();
     
-    // 设置新的SSID和密码并重连
-    void set_credentials(const char* new_ssid, const char* new_password);
-    
     // 原有的数据收发接口（保持兼容性）
     void send_byte(uint8_t data);
     void send_array(uint8_t* data, uint8_t length);
