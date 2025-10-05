@@ -1,2 +1,2 @@
-
+swarm_data_processor:swarm_monitor:swarm_planner:udp_ros_bridge
 -DCATKIN_DEVEL_PREFIX=/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/devel -DCMAKE_INSTALL_PREFIX=/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/install -G Unix Makefiles
