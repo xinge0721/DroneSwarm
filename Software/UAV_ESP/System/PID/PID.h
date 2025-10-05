@@ -1,28 +1,24 @@
 #ifndef PID_H
 #define PID_H
 
-#include "driver/gpio.h"
-#include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/queue.h"
-#include "freertos/semphr.h"
-#include "freertos/event_groups.h"
-#include "freertos/timers.h"
-#include "freertos/portmacro.h"
 // PID控制器
 class PID
 {
 private:
-    float _kp = 0;       // 比例系数
-    float _ki = 0;       // 积分系数
-    float _kd = 0;       // 微分系数
-    float _last_err = 0; // 上次误差
-    int _MAX = 0;       // 最大值
-    int _MIN = 0;       // 最小值
-    int _ControlVelocity = 0; // 控制速度
+
+    float _last_err ; // 上次误差
+    float _integral ; // 积分项累积
+    int _MAX ;       // 最大值
+    int _MIN ;       // 最小值
+    int _ControlVelocity ; // 控制速度
 
 public:
+    float _kp ;       // 比例系数
+    float _ki ;       // 积分系数
+    float _kd ;       // 微分系数
+    
+    PID(float kp = 0, float ki = 0, float kd = 0, int max_val = 255, int min_val = -255);
+    
     // 角度环(PID)
     int Turn_Pid(int now_position,float tar_position);
     // 速度环(增量式)
