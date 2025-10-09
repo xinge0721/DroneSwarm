@@ -4,10 +4,8 @@
 
 
 // ================ 构造函数 ================
-OLED::OLED()
-{
-
-			
+OLED::OLED(IIC& iic_instance) : _iic(iic_instance)
+{			
 	for (uint32_t i = 0; i < 1000; i++)			//上电延时
 	{
 		for (uint32_t j = 0; j < 1000; j++);

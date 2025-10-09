@@ -2,18 +2,18 @@
 #define __OLED_H
 
 #include "../../IIC/IIC.h"
-
 #include "OLED_Font.h"
-#include "../../System/sys/sys.h"
 
 
 
 // ================ 类定义 ================
 class OLED {
 private:
+	IIC& _iic;  // IIC引用
+	
 	// ================ 写入命令 ================
 	inline void Write(uint8_t command) {
-		iic.Write(0x78, 0x00, command);
+		_iic.Write(0x78, 0x00, command);
 	}
 
 	// ================ 设置光标 ================
@@ -42,7 +42,7 @@ private:
 public:
 
 	// ================ 构造函数 ================
-    OLED();
+    OLED(IIC& iic_instance);
 
 
 
