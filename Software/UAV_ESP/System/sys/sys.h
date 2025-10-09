@@ -3,9 +3,11 @@
 // ============ 头文件 ============
 #include "driver/gpio.h"
 #include "../../Hardware/IIC/IIC.h"
+#include "../../Hardware/TIME/TIME.h"
 // ============ 公共参数 ============
 extern IIC iic;
 
+extern TIME time;
 
 // ============ 系统初始化 ============
 void sys_init();

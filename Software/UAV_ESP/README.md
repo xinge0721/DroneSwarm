@@ -33,24 +33,30 @@ UAV_ESP/
 ├── Hardware/              # 硬件抽象层
 │   ├── WIFI/             # WIFI连接管理
 │   ├── UDP/              # UDP通信协议
-│   ├── MPU6050/          # 6轴陀螺仪加速度计
-│   ├── JY60/             # 姿态传感器
-│   ├── GPS/              # GPS定位模块
-│   ├── control/          # 电机控制
-│   ├── PWM/              # PWM信号输出
-│   ├── OLED/             # OLED显示屏
-│   ├── LED/              # LED指示灯
-│   ├── buzzer/           # 蜂鸣器
 │   ├── bluetooth/        # 蓝牙通信
+│   ├── buzzer/           # 蜂鸣器
+│   ├── control/          # 电机控制
+│   ├── GPS/              # GPS定位模块
+│   ├── IIC/              # I2C总线通信
+│   ├── JY60/             # 姿态传感器
+│   ├── LED/              # LED指示灯
+│   ├── MPU6050/          # 6轴陀螺仪加速度计
+│   ├── OLED/             # OLED显示屏
+│   ├── PWM/              # PWM信号输出
 │   └── TIME/             # 时间管理
 ├── System/               # 系统算法层
 │   ├── Kalman/           # 卡尔曼滤波器
 │   ├── PID/              # PID控制器
 │   ├── delay/            # 延时函数
 │   └── sys/              # 系统配置
-└── test/                 # 测试工具
-    ├── debug_network.md  # 网络调试说明
-    └── udp_server_test.py # UDP服务器测试脚本
+├── test/                 # 测试工具
+│   ├── debug_network.md  # 网络调试说明
+│   └── udp_server_test.py # UDP服务器测试脚本
+├── build/                # 构建输出目录
+├── managed_components/   # ESP-IDF管理组件
+├── CMakeLists.txt        # 主CMake配置文件
+├── dependencies.lock     # 组件依赖锁定文件
+└── sdkconfig*            # ESP-IDF配置文件
 ```
 
 ## 🔧 硬件支持
@@ -59,17 +65,23 @@ UAV_ESP/
 - **ESP32-S3**: 主控制器，支持WIFI和蓝牙
 
 ### 传感器模块
-- **MPU6050**: 6轴陀螺仪+加速度计，提供姿态数据
-- **JY60**: 姿态传感器，提供额外的姿态参考
-- **GPS模块**: 提供位置信息
+- **MPU6050**: 6轴陀螺仪+加速度计，通过I2C接口提供姿态数据
+- **JY60**: 姿态传感器，通过UART提供额外的姿态参考
+- **GPS模块**: 通过UART提供位置信息
 
 ### 执行器
 - **PWM输出**: 控制电机转速
 - **LED指示灯**: 状态指示
 - **蜂鸣器**: 声音提示
 
+### 通信接口
+- **I2C总线**: 连接OLED显示屏和MPU6050传感器
+- **UART接口**: 连接JY60姿态传感器和GPS模块
+- **WIFI/UDP**: 与地面站进行无线数据交换
+- **蓝牙**: 近距离调试和参数配置
+
 ### 显示设备
-- **OLED屏幕**: 显示飞行状态和系统信息
+- **OLED屏幕**: 通过I2C接口显示飞行状态和系统信息
 
 ## 🧮 核心算法
 
@@ -85,3 +97,42 @@ UAV_ESP/
 - **控制对象**: 无人机姿态和位置
 - **参数**: 比例(P)、积分(I)、微分(D)
 - **功能**: 确保飞行稳定性和响应精度
+
+## 🔨 构建和开发
+
+### 环境要求
+- **ESP-IDF**: v5.0或更高版本
+- **Python**: 3.7+
+- **CMake**: 3.16+
+
+### 快速开始
+```bash
+# 配置ESP-IDF环境
+. $IDF_PATH/export.sh
+
+# 进入项目目录
+cd UAV_ESP
+
+# 配置目标芯片
+idf.py set-target esp32s3
+
+# 构建项目
+idf.py build
+
+# 烧录固件
+idf.py flash
+
+# 监控串口输出
+idf.py monitor
+```
+
+### 开发状态
+- **当前版本**: v0.1.0-alpha
+- **开发进度**: 框架搭建阶段
+- **完成模块**: 基础硬件驱动框架，通信协议定义
+- **待开发**: 具体算法实现，硬件集成测试
+
+### 调试工具
+- **网络调试**: 使用 `test/udp_server_test.py` 测试UDP通信
+- **串口监控**: 通过 `idf.py monitor` 查看系统运行状态
+- **参数调试**: 支持运行时PID参数调整
