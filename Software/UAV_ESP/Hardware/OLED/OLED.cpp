@@ -1,8 +1,5 @@
 #include "OLED.h"
 
-
-
-
 // ================ 构造函数 ================
 OLED::OLED(IIC& iic_instance) : _iic(iic_instance)
 {			
