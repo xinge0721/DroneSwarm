@@ -2,7 +2,7 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h" //普通文本类型的消息
 #include <sstream>
-#include "UDP/UDP.h"
+#include "./UDP/UDP.h"
 
 int main(int argc, char  *argv[])
 {   
