@@ -53,13 +53,13 @@ void DataProcessing::ParseData(const std::string& data)
                 }
                 // GPS位置数据解析
                 else if (key == "x") {
-                    x = static_cast<int16_t>(std::stoi(value));     // 经度
+                    x = static_cast<float>(std::stoi(value));     // 经度
                 }
                 else if (key == "y") {
-                    y = static_cast<int16_t>(std::stoi(value));     // 纬度
+                    y = static_cast<float>(std::stoi(value));     // 纬度
                 }
                 else if (key == "z") {
-                    z = static_cast<int16_t>(std::stoi(value));     // 海拔高度
+                    z = static_cast<float>(std::stoi(value));     // 海拔高度
                 }
                 // 电池电压数据解析
                 else if (key == "batt") {
@@ -149,6 +149,7 @@ void DataProcessing::ParseData(const Json::Value& data)
     }
     
     // 解析GPS位置数据
+<<<<<<< HEAD
     if (data.isMember("x") && data["x"].isInt()) {
         x = static_cast<int16_t>(data["x"].asInt());            // 经度
     }
@@ -157,6 +158,16 @@ void DataProcessing::ParseData(const Json::Value& data)
     }
     if (data.isMember("z") && data["z"].isInt()) {
         z = static_cast<int16_t>(data["z"].asInt());            // 海拔高度
+=======
+    if (data.contains("x") && data["x"].is_number_integer()) {
+        x = static_cast<float>(data["x"]);            // 经度
+    }
+    if (data.contains("y") && data["y"].is_number_integer()) {
+        y = static_cast<float>(data["y"]);            // 纬度
+    }
+    if (data.contains("z") && data["z"].is_number_integer()) {
+        z = static_cast<float>(data["z"]);            // 海拔高度
+>>>>>>> origin/moyu
     }
     
     // 解析电池电压数据
@@ -266,10 +277,10 @@ void DataProcessing::ParseData(const uint8_t* data)
             break;
             
         case 0x01: // GPS位置数据解析
-            // 最高位是符号位
-            x = data[4] << 8 | data[5];    // 经度 高八位+低八位
-            y = data[6] << 8 | data[7];    // 纬度 高八位+低八位
-            z = data[8] << 8 | data[9];    // 海拔高度 高八位+低八位
+            // 注意：GPS数据为浮点数，一共四个字节
+            x = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];    
+            y = data[8] << 24 | data[9] << 16 | data[10] << 8 | data[11];    
+            z = data[12] << 24 | data[13] << 16 | data[14] << 8 | data[15];    
             break;
             
         case 0x02: // 电池电压数据解析

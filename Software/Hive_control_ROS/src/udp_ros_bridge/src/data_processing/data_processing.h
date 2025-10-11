@@ -36,9 +36,9 @@ public:
     int16_t yaw = 0;//偏航角
 
     // GPS数据
-    int16_t x = 0;//经度
-    int16_t y = 0;//纬度
-    int16_t z = 0;//高度
+    float x = 0;//经度
+    float y = 0;//纬度
+    float z = 0;//高度
     // ADC数据
     uint8_t batt = 0;//电池电压
     // PID数据

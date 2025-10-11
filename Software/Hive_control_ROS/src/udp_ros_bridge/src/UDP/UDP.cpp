@@ -8,21 +8,13 @@
 #include <queue>
 #include <functional>
 
-// ====================== 静态变量======================
-
-
-// ====================== 构造函数======================
-// 函数名：构造函数
-// 参数一：服务器端口号
-UDP::UDP(int port) : sockfd(-1), running(false), server_port(port) {
+// ====================== 模板构造函数实现======================
+template<typename DataType>
+UDP<DataType>::UDP(int port) : sockfd(-1), running(false), server_port(port) {
     // 初始化服务器地址
-    // 清空服务器地址结构
     memset(&server_addr, 0, sizeof(server_addr));
 
     // 创建socket
-    // 参数一：地址族
-    // 参数二：套接字类型
-    // 参数三：协议类型
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
         std::cerr << "Failed to create socket" << std::endl;
@@ -43,60 +35,53 @@ UDP::UDP(int port) : sockfd(-1), running(false), server_port(port) {
         return;
     }
     
-    std::cout << "UDP Server initialized on port " << port << std::endl;
-    return;
+    std::cout << "UDP模板服务器构建成功，端口: " << port << std::endl;
 }
-// ====================== 析构函数 ======================
-UDP::~UDP() {
+
+// ====================== 模板析构函数实现 ======================
+template<typename DataType>
+UDP<DataType>::~UDP() {
     stop();
 }
 
-
-// ====================== 开始监听 ======================
-void UDP::startListening() {
+// ====================== 开始监听实现 ======================
+template<typename DataType>
+void UDP<DataType>::startListening() {
     if (sockfd < 0) {
         std::cerr << "UDP server not initialized" << std::endl;
         return;
     }
     
     running = true;
-    std::cout << "UDP Server started listening..." << std::endl;
+    std::cout << "UDP模板服务器开始监听" << std::endl;
 
     // 在新线程中运行接收循环
-    std::thread receive_thread(&UDP::receiveLoop, this);
+    std::thread receive_thread(&UDP<DataType>::receiveLoop, this);
     receive_thread.detach();
 }
 
-// ====================== 停止服务器 ======================
-void UDP::stop() {
+// ====================== 停止服务器实现 ======================
+template<typename DataType>
+void UDP<DataType>::stop() {
     running = false;
     if (sockfd >= 0) {
         close(sockfd);
         sockfd = -1;
-        std::cout << "UDP Server stopped" << std::endl;
+        std::cout << "UDP模板服务器停止监听" << std::endl;
     }
 }
 
-// ====================== 设置消息接收回调函数 ======================
-// 函数名：设置消息接收回调函数
-// 参数一：回调函数
-// 参数二：消息
-// 参数三：客户端IP
-// 参数四：客户端端口
-
-void UDP::setMessageCallback(std::function<void(const std::string&, const std::string&, int)> callback) {
+// ====================== 设置回调函数实现 ======================
+template<typename DataType>
+void UDP<DataType>::setMessageCallback(std::function<void(const DataType&, const std::string&, int)> callback) {
     message_callback = callback;
 }
 
-// ====================== 发送消息到指定客户端 ======================
-// 函数名：发送消息到指定客户端
-// 参数一：消息
-// 参数二：客户端IP
-// 参数三：客户端端口
-// 返回值：是否发送成功
-bool UDP::sendTo(const std::string& message, const std::string& ip, int port) {
+// ====================== 发送消息实现 ======================
+template<typename DataType>
+bool UDP<DataType>::sendTo(const DataType& message, const std::string& ip, int port) {
     if (sockfd < 0) {
-        std::cerr << "UDP server not initialized" << std::endl;
+        std::cerr << "UDP 未初始化" << std::endl;
         return false;
     }
     
@@ -106,58 +91,72 @@ bool UDP::sendTo(const std::string& message, const std::string& ip, int port) {
     client_addr.sin_port = htons(port);
     
     if (inet_pton(AF_INET, ip.c_str(), &client_addr.sin_addr) <= 0) {
-        std::cerr << "Invalid IP address: " << ip << std::endl;
+        std::cerr << "无效的IP地址: " << ip << std::endl;
         return false;
     }
     
-    ssize_t sent_bytes = sendto(sockfd, message.c_str(), message.length(), 0,
+    // 序列化数据
+    std::vector<uint8_t> serialized_data = serializeData(message);
+    
+    ssize_t sent_bytes = sendto(sockfd, serialized_data.data(), serialized_data.size(), 0,
                                (struct sockaddr*)&client_addr, sizeof(client_addr));
     
     if (sent_bytes < 0) {
-        std::cerr << "Failed to send message to " << ip << ":" << port << std::endl;
+        std::cerr << "发送失败到 " << ip << ":" << port << std::endl;
         return false;
     }
     
-    std::cout << "Sent to " << ip << ":" << port << " - " << message << std::endl;
+    std::cout << "发送成功到 " << ip << ":" << port << " (数据长度: " << serialized_data.size() << ")" << std::endl;
     return true;
 }
 
-// ====================== 获取接收到的消息 ======================
-// 函数名：获取接收到的消息
-// 参数一：消息
-// 返回值：是否获取成功
-bool UDP::getReceivedMessage(UDPMessage& message) {
-    // 加锁
+// ====================== 获取单个消息实现 ======================
+template<typename DataType>
+bool UDP<DataType>::getReceivedMessage(UDPMessage<DataType>& message) {
     std::lock_guard<std::mutex> lock(cache_mutex);
     if (message_cache.empty()) {
         return false;
     }
-    // 获取消息缓存中的第一个消息
     message = message_cache.front();
     message_cache.pop();
     return true;
 }
 
-// ====================== 获取消息缓存数量 ======================
-// 函数名：获取消息缓存数量
-// 返回值：消息缓存数量
-size_t UDP::getMessageCount() {
+// ====================== 获取消息队列实现 ======================
+template<typename DataType>
+std::queue<DataType> UDP<DataType>::getMessageQueue() {
+    std::lock_guard<std::mutex> lock(cache_mutex);
+    std::queue<DataType> data_queue;
+    
+    // 提取所有消息的数据部分
+    while (!message_cache.empty()) {
+        data_queue.push(message_cache.front().data);
+        message_cache.pop();
+    }
+    
+    return data_queue;
+}
+
+// ====================== 获取消息数量实现 ======================
+template<typename DataType>
+size_t UDP<DataType>::getMessageCount() {
     std::lock_guard<std::mutex> lock(cache_mutex);
     return message_cache.size();
 }
 
-// ====================== 清空消息缓存 ======================
-// 函数名：清空消息缓存
-void UDP::clearMessageCache() {
+// ====================== 清空消息缓存实现 ======================
+template<typename DataType>
+void UDP<DataType>::clearMessageCache() {
     std::lock_guard<std::mutex> lock(cache_mutex);
     while (!message_cache.empty()) {
         message_cache.pop();
     }
-    std::cout << "Message cache cleared" << std::endl;
+    std::cout << "消息缓存清空" << std::endl;
 }
-// ====================== 接收循环 ======================
-// 函数名：接收循环
-void UDP::receiveLoop() {
+
+// ====================== 接收循环实现 ======================
+template<typename DataType>
+void UDP<DataType>::receiveLoop() {
     char buffer[1024];
     struct sockaddr_in client_addr;
     socklen_t client_len = sizeof(client_addr);
@@ -169,27 +168,77 @@ void UDP::receiveLoop() {
                                    (struct sockaddr*)&client_addr, &client_len);
         
         if (recv_len > 0) {
-            buffer[recv_len] = '\0';
-            std::string message_data(buffer);
-            std::string client_ip = inet_ntoa(client_addr.sin_addr);
-            int client_port = ntohs(client_addr.sin_port);
-            
-            std::cout << "Received from " << client_ip << ":" << client_port 
-                     << " - " << message_data << std::endl;
-            
-            // 如果设置了回调函数，直接调用
-            if (message_callback) {
-                message_callback(message_data, client_ip, client_port);
-            } else {
-                // 否则存入缓存
-                UDPMessage msg;
-                msg.data = message_data;
-                msg.client_ip = client_ip;
-                msg.client_port = client_port;
+            try {
+                // 使用模板特化进行数据转换
+                DataType message_data = convertRawData(buffer, recv_len);
+                std::string client_ip = inet_ntoa(client_addr.sin_addr);
+                int client_port = ntohs(client_addr.sin_port);
                 
-                std::lock_guard<std::mutex> lock(cache_mutex);
-                message_cache.push(msg);
+                std::cout << "收到来自 " << client_ip << ":" << client_port 
+                         << " (数据长度: " << recv_len << ")" << std::endl;
+                
+                // 如果设置了回调函数，直接调用
+                if (message_callback) {
+                    message_callback(message_data, client_ip, client_port);
+                } else {
+                    // 否则存入缓存
+                    UDPMessage<DataType> msg;
+                    msg.data = message_data;
+                    msg.client_ip = client_ip;
+                    msg.client_port = client_port;
+                    
+                    std::lock_guard<std::mutex> lock(cache_mutex);
+                    message_cache.push(msg);
+                }
+            }
+            catch (const std::exception& e) {
+                std::cerr << "数据转换失败: " << e.what() << std::endl;
             }
         }
     }
 }
+
+// ====================== 数据转换特化实现 ======================
+// 字符串类型特化
+template<>
+std::string UDP<std::string>::convertRawData(const char* buffer, size_t length) {
+    return std::string(buffer, length);
+}
+
+template<>
+std::vector<uint8_t> UDP<std::string>::serializeData(const std::string& data) {
+    return std::vector<uint8_t>(data.begin(), data.end());
+}
+
+// JSON类型特化
+template<>
+nlohmann::json UDP<nlohmann::json>::convertRawData(const char* buffer, size_t length) {
+    try {
+        std::string json_str(buffer, length);
+        return nlohmann::json::parse(json_str);
+    } catch (const std::exception& e) {
+        throw std::runtime_error("JSON解析失败: " + std::string(e.what()));
+    }
+}
+
+template<>
+std::vector<uint8_t> UDP<nlohmann::json>::serializeData(const nlohmann::json& data) {
+    std::string json_str = data.dump();
+    return std::vector<uint8_t>(json_str.begin(), json_str.end());
+}
+
+// 二进制类型特化
+template<>
+std::vector<uint8_t> UDP<std::vector<uint8_t>>::convertRawData(const char* buffer, size_t length) {
+    return std::vector<uint8_t>(buffer, buffer + length);
+}
+
+template<>
+std::vector<uint8_t> UDP<std::vector<uint8_t>>::serializeData(const std::vector<uint8_t>& data) {
+    return data; // 二进制数据直接返回
+}
+
+// ====================== 显式实例化 ======================
+template class UDP<std::string>;
+template class UDP<nlohmann::json>;
+template class UDP<std::vector<uint8_t>>;

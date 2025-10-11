@@ -8,14 +8,21 @@
 #include <functional>
 #include <queue>
 #include <mutex>
+#include <vector>
+#include <type_traits>
+#include <stdexcept>
+#include <iostream>
+#include <json.hpp>
 
-// UDP消息结构
+// 通用UDP消息结构模板
+template<typename DataType>
 struct UDPMessage {
-    std::string data;
+    DataType data;              // 支持泛型数据
     std::string client_ip;
     int client_port;
 };
 
+template<typename DataType>
 class UDP {
 public:
     UDP(int port = 8888);
@@ -26,14 +33,17 @@ public:
     // 停止服务
     void stop();
     
-    // 发送数据到指定客户端
-    bool sendTo(const std::string& message, const std::string& ip, int port);
+    // 发送数据到指定客户端（模板化）
+    bool sendTo(const DataType& message, const std::string& ip, int port);
     
-    // 设置消息接收回调函数（可选，如果不设置则数据存入缓存）
-    void setMessageCallback(std::function<void(const std::string&, const std::string&, int)> callback);
+    // 设置消息接收回调函数（模板化）
+    void setMessageCallback(std::function<void(const DataType&, const std::string&, int)> callback);
     
     // 从缓存中获取接收到的消息
-    bool getReceivedMessage(UDPMessage& message);
+    bool getReceivedMessage(UDPMessage<DataType>& message);
+    
+    // 获取整个消息队列（与DroneData<T>配合使用）
+    std::queue<DataType> getMessageQueue();
     
     // 获取缓存中消息数量
     size_t getMessageCount();
@@ -51,16 +61,25 @@ private:
     // 服务器端口号
     int server_port;
     
-    // 消息接收回调函数
-    std::function<void(const std::string&, const std::string&, int)> message_callback;
+    // 模板化消息接收回调函数
+    std::function<void(const DataType&, const std::string&, int)> message_callback;
     
-    // 消息缓存队列
-    std::queue<UDPMessage> message_cache;
+    // 模板化消息缓存队列
+    std::queue<UDPMessage<DataType>> message_cache;
     // 缓存访问互斥锁
     std::mutex cache_mutex;
     
     // 接收循环
     void receiveLoop();
+    
+    // 数据转换辅助方法
+    DataType convertRawData(const char* buffer, size_t length);
+    std::vector<uint8_t> serializeData(const DataType& data);
 };
+
+// 显式实例化声明（支持常用类型）
+template class UDP<std::string>;
+template class UDP<nlohmann::json>;
+template class UDP<std::vector<uint8_t>>;
 
 #endif // UDP_H
