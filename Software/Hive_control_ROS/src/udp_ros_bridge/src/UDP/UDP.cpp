@@ -18,10 +18,6 @@ UDP::UDP(int port) : sockfd(-1), running(false), server_port(port) {
     // 初始化服务器地址
     // 清空服务器地址结构
     memset(&server_addr, 0, sizeof(server_addr));
-    // 自动初始化UDP服务器
-    if (!init(port)) {
-        std::cerr << "Failed to auto-initialize UDP server on port " << port << std::endl;
-    }
 
     // 创建socket
     // 参数一：地址族

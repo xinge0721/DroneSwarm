@@ -21,8 +21,6 @@ public:
     UDP(int port = 8888);
     ~UDP();
     
-    // 初始化UDP服务端
-    bool init(int port);
     // 开始监听
     void startListening();
     // 停止服务

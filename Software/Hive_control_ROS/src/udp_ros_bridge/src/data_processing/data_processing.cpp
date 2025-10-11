@@ -130,55 +130,55 @@ void DataProcessing::ParseData(const std::string& data)
  *     "pid": [{"kp":10,"ki":5,"kd":2}, {"kp":8,"ki":4,"kd":1}]
  *   }
  */
-void DataProcessing::ParseData(const nlohmann::json& data)
+void DataProcessing::ParseData(const Json::Value& data)
 {
     // 解析无人机编号，检查字段存在性和数据类型
-    if (data.contains("id") && data["id"].is_number_integer()) {
-        id = static_cast<uint8_t>(data["id"]);
+    if (data.isMember("id") && data["id"].isInt()) {
+        id = static_cast<uint8_t>(data["id"].asInt());
     }
     
     // 解析MPU6050姿态数据
-    if (data.contains("roll") && data["roll"].is_number_integer()) {
-        roll = static_cast<int16_t>(data["roll"]);      // 横滚角
+    if (data.isMember("roll") && data["roll"].isInt()) {
+        roll = static_cast<int16_t>(data["roll"].asInt());      // 横滚角
     }
-    if (data.contains("pitch") && data["pitch"].is_number_integer()) {
-        pitch = static_cast<int16_t>(data["pitch"]);    // 俯仰角
+    if (data.isMember("pitch") && data["pitch"].isInt()) {
+        pitch = static_cast<int16_t>(data["pitch"].asInt());    // 俯仰角
     }
-    if (data.contains("yaw") && data["yaw"].is_number_integer()) {
-        yaw = static_cast<int16_t>(data["yaw"]);        // 偏航角
+    if (data.isMember("yaw") && data["yaw"].isInt()) {
+        yaw = static_cast<int16_t>(data["yaw"].asInt());        // 偏航角
     }
     
     // 解析GPS位置数据
-    if (data.contains("x") && data["x"].is_number_integer()) {
-        x = static_cast<int16_t>(data["x"]);            // 经度
+    if (data.isMember("x") && data["x"].isInt()) {
+        x = static_cast<int16_t>(data["x"].asInt());            // 经度
     }
-    if (data.contains("y") && data["y"].is_number_integer()) {
-        y = static_cast<int16_t>(data["y"]);            // 纬度
+    if (data.isMember("y") && data["y"].isInt()) {
+        y = static_cast<int16_t>(data["y"].asInt());            // 纬度
     }
-    if (data.contains("z") && data["z"].is_number_integer()) {
-        z = static_cast<int16_t>(data["z"]);            // 海拔高度
+    if (data.isMember("z") && data["z"].isInt()) {
+        z = static_cast<int16_t>(data["z"].asInt());            // 海拔高度
     }
     
     // 解析电池电压数据
-    if (data.contains("batt") && data["batt"].is_number_integer()) {
-        batt = static_cast<uint8_t>(data["batt"]);      // 电池电压
+    if (data.isMember("batt") && data["batt"].isInt()) {
+        batt = static_cast<uint8_t>(data["batt"].asInt());      // 电池电压
     }
     
     // 解析PID数据 - 优先处理数组格式
-    if (data.contains("pid") && data["pid"].is_array()) {
-        auto pid_array = data["pid"];
+    if (data.isMember("pid") && data["pid"].isArray()) {
+        const Json::Value& pid_array = data["pid"];
         // 遍历PID数组，最多处理4个电机的PID参数
-        for (size_t i = 0; i < std::min(static_cast<size_t>(4), pid_array.size()); i++) {
-            if (pid_array[i].is_object()) {
+        for (Json::ArrayIndex i = 0; i < std::min(static_cast<Json::ArrayIndex>(4), pid_array.size()); i++) {
+            if (pid_array[i].isObject()) {
                 // 解析第i个电机的PID参数
-                if (pid_array[i].contains("kp") && pid_array[i]["kp"].is_number_integer()) {
-                    pid[i].kp = static_cast<uint8_t>(pid_array[i]["kp"]);   // 比例系数
+                if (pid_array[i].isMember("kp") && pid_array[i]["kp"].isInt()) {
+                    pid[i].kp = static_cast<uint8_t>(pid_array[i]["kp"].asInt());   // 比例系数
                 }
-                if (pid_array[i].contains("ki") && pid_array[i]["ki"].is_number_integer()) {
-                    pid[i].ki = static_cast<uint8_t>(pid_array[i]["ki"]);   // 积分系数
+                if (pid_array[i].isMember("ki") && pid_array[i]["ki"].isInt()) {
+                    pid[i].ki = static_cast<uint8_t>(pid_array[i]["ki"].asInt());   // 积分系数
                 }
-                if (pid_array[i].contains("kd") && pid_array[i]["kd"].is_number_integer()) {
-                    pid[i].kd = static_cast<uint8_t>(pid_array[i]["kd"]);   // 微分系数
+                if (pid_array[i].isMember("kd") && pid_array[i]["kd"].isInt()) {
+                    pid[i].kd = static_cast<uint8_t>(pid_array[i]["kd"].asInt());   // 微分系数
                 }
             }
         }
@@ -188,14 +188,14 @@ void DataProcessing::ParseData(const nlohmann::json& data)
         for (int i = 0; i < 4; i++) {
             std::string prefix = "pid" + std::to_string(i) + "_";
             // 解析第i个电机的PID参数
-            if (data.contains(prefix + "kp") && data[prefix + "kp"].is_number_integer()) {
-                pid[i].kp = static_cast<uint8_t>(data[prefix + "kp"]);
+            if (data.isMember(prefix + "kp") && data[prefix + "kp"].isInt()) {
+                pid[i].kp = static_cast<uint8_t>(data[prefix + "kp"].asInt());
             }
-            if (data.contains(prefix + "ki") && data[prefix + "ki"].is_number_integer()) {
-                pid[i].ki = static_cast<uint8_t>(data[prefix + "ki"]);
+            if (data.isMember(prefix + "ki") && data[prefix + "ki"].isInt()) {
+                pid[i].ki = static_cast<uint8_t>(data[prefix + "ki"].asInt());
             }
-            if (data.contains(prefix + "kd") && data[prefix + "kd"].is_number_integer()) {
-                pid[i].kd = static_cast<uint8_t>(data[prefix + "kd"]);
+            if (data.isMember(prefix + "kd") && data[prefix + "kd"].isInt()) {
+                pid[i].kd = static_cast<uint8_t>(data[prefix + "kd"].asInt());
             }
         }
     }

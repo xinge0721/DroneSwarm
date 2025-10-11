@@ -9,7 +9,7 @@
 #include <mutex>
 #include <thread>
 #include <chrono>
-#include <json.hpp>
+#include <json/json.h>
 #include <sstream>      // std::stringstream
 #include <algorithm>    // std::min
 #include <stdexcept>    // std::runtime_error
@@ -48,7 +48,7 @@ public:
 
     // 更新
     void ParseData(const std::string& data);
-    void ParseData(const nlohmann::json& data);
+    void ParseData(const Json::Value& data);
     void ParseData(const uint8_t* data);
 };
 

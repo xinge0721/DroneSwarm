@@ -15,6 +15,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(JSONCPP jsoncpp)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -118,6 +120,7 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  ${JSONCPP_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -150,6 +153,7 @@ add_executable(udp_ros_bridge src/main.cpp
 ## Specify libraries to link a library or executable target against
 target_link_libraries(udp_ros_bridge
   ${catkin_LIBRARIES}
+  ${JSONCPP_LIBRARIES}
 )
 
 #############
