@@ -286,7 +286,7 @@ void OLED::Init(void)
 {
 	uint32_t i, j;
 	
-	vTaskDelay(pdMS_TO_TICKS(100));
+	Delay::delay_ms(100); 
 	
 	
 	SendCommand(0xAE);	//关闭显示
