@@ -146,10 +146,13 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/build/gtest/cmake_install.cmake")
+  include("/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/build/language/cmake_install.cmake")
+  include("/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/build/mic/cmake_install.cmake")
   include("/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/build/swarm_data_processor/cmake_install.cmake")
   include("/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/build/swarm_monitor/cmake_install.cmake")
   include("/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/build/swarm_planner/cmake_install.cmake")
   include("/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/build/udp_ros_bridge/cmake_install.cmake")
+  include("/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/build/xinhuo/cmake_install.cmake")
 
 endif()
 

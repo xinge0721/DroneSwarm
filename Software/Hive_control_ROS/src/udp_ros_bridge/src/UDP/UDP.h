@@ -12,7 +12,7 @@
 #include <type_traits>
 #include <stdexcept>
 #include <iostream>
-#include <json.hpp>
+#include <json/json.h>
 
 // 通用UDP消息结构模板
 template<typename DataType>
@@ -77,9 +77,34 @@ private:
     std::vector<uint8_t> serializeData(const DataType& data);
 };
 
+
+// ====================== 模板特化声明 ======================
+// 注意：模板特化必须在使用之前声明
+
+// 字符串类型特化声明
+template<>
+std::string UDP<std::string>::convertRawData(const char* buffer, size_t length);
+
+template<>
+std::vector<uint8_t> UDP<std::string>::serializeData(const std::string& data);
+
+// JSON类型特化声明
+template<>
+Json::Value UDP<Json::Value>::convertRawData(const char* buffer, size_t length);
+
+template<>
+std::vector<uint8_t> UDP<Json::Value>::serializeData(const Json::Value& data);
+
+// 二进制类型特化声明
+template<>
+std::vector<uint8_t> UDP<std::vector<uint8_t>>::convertRawData(const char* buffer, size_t length);
+
+template<>
+std::vector<uint8_t> UDP<std::vector<uint8_t>>::serializeData(const std::vector<uint8_t>& data);
+
 // 显式实例化声明（支持常用类型）
-template class UDP<std::string>;
-template class UDP<nlohmann::json>;
-template class UDP<std::vector<uint8_t>>;
+extern template class UDP<std::string>;
+extern template class UDP<Json::Value>;
+extern template class UDP<std::vector<uint8_t>>;
 
 #endif // UDP_H

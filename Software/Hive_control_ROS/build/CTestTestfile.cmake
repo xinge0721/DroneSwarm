@@ -5,7 +5,10 @@
 # This file includes the relevant testing commands required for 
 # testing this directory and lists subdirectories to be tested as well.
 subdirs("gtest")
+subdirs("language")
+subdirs("mic")
 subdirs("swarm_data_processor")
 subdirs("swarm_monitor")
 subdirs("swarm_planner")
 subdirs("udp_ros_bridge")
+subdirs("xinhuo")

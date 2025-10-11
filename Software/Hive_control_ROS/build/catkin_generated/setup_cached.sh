@@ -9,6 +9,7 @@
 # modified environment variables
 export CMAKE_PREFIX_PATH="/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/devel:$CMAKE_PREFIX_PATH"
 export LD_LIBRARY_PATH="/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/devel/lib:$LD_LIBRARY_PATH"
+export PKG_CONFIG_PATH="/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/devel/lib/pkgconfig:$PKG_CONFIG_PATH"
 export PWD='/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/build'
 export ROSLISP_PACKAGE_DIRECTORIES='/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/devel/share/common-lisp'
 export ROS_PACKAGE_PATH="/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/src:$ROS_PACKAGE_PATH"

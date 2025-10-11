@@ -50,6 +50,7 @@ public:
     void ParseData(const std::string& data);
     void ParseData(const Json::Value& data);
     void ParseData(const uint8_t* data);
+    void ParseData(const std::vector<uint8_t>& data); 
 };
 
 // 无人机数据

@@ -149,25 +149,14 @@ void DataProcessing::ParseData(const Json::Value& data)
     }
     
     // 解析GPS位置数据
-<<<<<<< HEAD
-    if (data.isMember("x") && data["x"].isInt()) {
-        x = static_cast<int16_t>(data["x"].asInt());            // 经度
+    if (data.isMember("x") && (data["x"].isNumeric() || data["x"].isInt())) {
+        x = static_cast<float>(data["x"].asDouble());            // 经度
     }
-    if (data.isMember("y") && data["y"].isInt()) {
-        y = static_cast<int16_t>(data["y"].asInt());            // 纬度
+    if (data.isMember("y") && (data["y"].isNumeric() || data["y"].isInt())) {
+        y = static_cast<float>(data["y"].asDouble());            // 纬度
     }
-    if (data.isMember("z") && data["z"].isInt()) {
-        z = static_cast<int16_t>(data["z"].asInt());            // 海拔高度
-=======
-    if (data.contains("x") && data["x"].is_number_integer()) {
-        x = static_cast<float>(data["x"]);            // 经度
-    }
-    if (data.contains("y") && data["y"].is_number_integer()) {
-        y = static_cast<float>(data["y"]);            // 纬度
-    }
-    if (data.contains("z") && data["z"].is_number_integer()) {
-        z = static_cast<float>(data["z"]);            // 海拔高度
->>>>>>> origin/moyu
+    if (data.isMember("z") && (data["z"].isNumeric() || data["z"].isInt())) {
+        z = static_cast<float>(data["z"].asDouble());            // 海拔高度
     }
     
     // 解析电池电压数据
@@ -317,5 +306,17 @@ void DataProcessing::ParseData(const uint8_t* data)
             
         default: // 未知状态位，忽略数据包
             break;
+    }
+}
+
+/**
+ * @brief 解析vector<uint8_t>格式的无人机数据包
+ * @param data 输入的vector<uint8_t>数据
+ * @details 这是一个适配器方法，将vector转换为指针后调用二进制解析方法
+ */
+void DataProcessing::ParseData(const std::vector<uint8_t>& data)
+{
+    if (!data.empty()) {
+        ParseData(data.data());  // 调用已有的二进制数据解析方法
     }
 }

@@ -212,18 +212,26 @@ std::vector<uint8_t> UDP<std::string>::serializeData(const std::string& data) {
 
 // JSON类型特化
 template<>
-nlohmann::json UDP<nlohmann::json>::convertRawData(const char* buffer, size_t length) {
+Json::Value UDP<Json::Value>::convertRawData(const char* buffer, size_t length) {
     try {
+        Json::Value root;
+        Json::Reader reader;
         std::string json_str(buffer, length);
-        return nlohmann::json::parse(json_str);
+        
+        if (!reader.parse(json_str, root)) {
+            throw std::runtime_error("JSON解析失败: " + reader.getFormattedErrorMessages());
+        }
+        
+        return root;
     } catch (const std::exception& e) {
         throw std::runtime_error("JSON解析失败: " + std::string(e.what()));
     }
 }
 
 template<>
-std::vector<uint8_t> UDP<nlohmann::json>::serializeData(const nlohmann::json& data) {
-    std::string json_str = data.dump();
+std::vector<uint8_t> UDP<Json::Value>::serializeData(const Json::Value& data) {
+    Json::StreamWriterBuilder builder;
+    std::string json_str = Json::writeString(builder, data);
     return std::vector<uint8_t>(json_str.begin(), json_str.end());
 }
 
@@ -240,5 +248,5 @@ std::vector<uint8_t> UDP<std::vector<uint8_t>>::serializeData(const std::vector<
 
 // ====================== 显式实例化 ======================
 template class UDP<std::string>;
-template class UDP<nlohmann::json>;
+template class UDP<Json::Value>;
 template class UDP<std::vector<uint8_t>>;
