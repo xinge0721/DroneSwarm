@@ -1,8 +1,0 @@
-prefix=/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/install
-
-Name: swarm_planner
-Description: Description of swarm_planner
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 

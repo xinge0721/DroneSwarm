@@ -1,8 +1,0 @@
-prefix=/home/xinge/chenxu/DroneSwarm/Software/Hive_control_ROS/install
-
-Name: swarm_data_processor
-Description: Description of swarm_data_processor
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 
