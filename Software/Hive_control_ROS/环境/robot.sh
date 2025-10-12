@@ -84,6 +84,23 @@ install_step "apt update" "更新软件包列表"
 install_step "apt install -y vim terminator" "安装 vim 和 terminator"
 install_step "apt install -y libasound2-dev sox libsox-fmt-all python3-pip unzip nfs-common git cmake libportaudio2 portaudio19-dev python3-dev" "安装系统依赖包"
 
+# ROS 包安装
+echo "=> 安装 ROS 无人机集群相关包"
+echo "----------------------------------------"
+install_step "apt install -y ros-noetic-amcl ros-noetic-controller-manager ros-noetic-dynamic-reconfigure" "安装 ROS 基础包 (1/8)"
+install_step "apt install -y ros-noetic-gazebo-plugins ros-noetic-gazebo-ros ros-noetic-gazebo-ros-control" "安装 Gazebo 仿真包 (2/8)"
+install_step "apt install -y ros-noetic-geometry-msgs ros-noetic-gmapping ros-noetic-hector-slam" "安装 SLAM 和几何包 (3/8)"
+install_step "apt install -y ros-noetic-joint-state-publisher ros-noetic-map-server ros-noetic-move-base" "安装 导航基础包 (4/8)"
+install_step "apt install -y ros-noetic-mavros ros-noetic-mavros-msgs ros-noetic-mavros-extras" "安装 MAVLink 通信包 (5/8)"
+install_step "apt install -y ros-noetic-nav-msgs ros-noetic-robot-state-publisher ros-noetic-rosbag" "安装 消息和状态包 (6/8)"
+install_step "apt install -y ros-noetic-roscpp ros-noetic-roslaunch ros-noetic-rospy ros-noetic-rviz" "安装 ROS 核心包 (7/8)"
+install_step "apt install -y ros-noetic-sensor-msgs ros-noetic-std-msgs ros-noetic-tf2 ros-noetic-tf2-geometry-msgs ros-noetic-tf2-ros" "安装 传感器和变换包 (8/8)"
+install_step "apt install -y ros-noetic-urdf ros-noetic-visualization-msgs ros-noetic-xacro" "安装 机器人描述包"
+install_step "apt install -y ros-noetic-navigation ros-noetic-robot-localization" "安装 导航扩展包"
+echo "✅ ROS 包安装完成"
+echo "========================================"
+echo ""
+
 # Python包安装
 install_step "pip3 install websocket-client vosk sounddevice" "安装 Python 依赖包"
 
@@ -225,41 +242,104 @@ else
     echo "[警告] ch9102_udev.sh 文件不存在，跳过"
 fi
 
-# 安装cJSON库 (安装到用户主目录)
-if [ -d "cJSON" ]; then
-    echo "=> 安装cJSON库到 $HOME_DIR"
-    echo "----------------------------------------"
-    
-    # 复制到用户主目录
-    echo "复制cJSON到 $HOME_DIR"
-    cp -r cJSON "$HOME_DIR/"
-    
-    # 编译安装
-    cd "$HOME_DIR/cJSON"
-    if [ -d "build" ]; then
-        echo "清理旧构建目录"
-        rm -rf build
-    fi
-    
-    mkdir build
-    cd build
-    cmake .. > /dev/null
-    make > /dev/null
-    sudo make install > /dev/null
-    
-    if [ $? -eq 0 ]; then
-        echo "[成功] 安装cJSON"
-    else
-        echo "[失败] 安装cJSON"
-    fi
-    
-    # 返回原目录
-    cd "$MAIN_DIR"
-    echo "========================================"
-    echo ""
+# 自动下载并安装cJSON库
+echo "=> 自动下载并安装cJSON库"
+echo "----------------------------------------"
+
+# cJSON库配置
+CJSON_REPO="https://github.com/DaveGamble/cJSON.git"
+CJSON_TAG="v1.7.17"  # 使用稳定版本
+CJSON_DIR="$HOME_DIR/cJSON"
+
+# 检查是否已安装cJSON
+if pkg-config --exists libcjson 2>/dev/null; then
+    echo "cJSON库已在系统中安装，跳过"
+elif [ -d "$CJSON_DIR" ] && [ -f "$CJSON_DIR/build/libcjson.so" ]; then
+    echo "cJSON库已在用户目录编译，跳过"
 else
-    echo "[警告] cJSON目录不存在，跳过安装"
+    echo "开始下载和编译cJSON库..."
+    
+    # 如果本地存在cJSON目录，先使用本地版本
+    if [ -d "cJSON" ]; then
+        echo "发现本地cJSON目录，使用本地版本"
+        cp -r cJSON "$CJSON_DIR"
+    else
+        echo "从GitHub克隆cJSON库..."
+        # 检查git是否可用
+        if ! command -v git &> /dev/null; then
+            echo "[错误] git未安装，无法下载cJSON库"
+            echo "请先安装git: sudo apt install git"
+        else
+            # 克隆仓库到用户主目录
+            if git clone --depth 1 --branch "$CJSON_TAG" "$CJSON_REPO" "$CJSON_DIR" 2>/dev/null; then
+                echo "[成功] cJSON库下载完成 (版本: $CJSON_TAG)"
+            else
+                echo "[警告] 下载指定版本失败，尝试下载最新版本..."
+                if git clone --depth 1 "$CJSON_REPO" "$CJSON_DIR" 2>/dev/null; then
+                    echo "[成功] cJSON库下载完成 (最新版本)"
+                else
+                    echo "[失败] 无法下载cJSON库"
+                    echo "请检查网络连接或手动下载："
+                    echo "  git clone $CJSON_REPO $CJSON_DIR"
+                fi
+            fi
+        fi
+    fi
+    
+    # 编译和安装cJSON
+    if [ -d "$CJSON_DIR" ]; then
+        echo "开始编译cJSON库..."
+        cd "$CJSON_DIR"
+        
+        # 清理旧构建目录
+        if [ -d "build" ]; then
+            echo "清理旧构建目录"
+            rm -rf build
+        fi
+        
+        # 创建构建目录并编译
+        mkdir build
+        cd build
+        
+        echo "配置cmake..."
+        cmake -DENABLE_CJSON_UTILS=On -DENABLE_CJSON_TEST=Off -DCMAKE_BUILD_TYPE=Release .. > /dev/null 2>&1
+        
+        if [ $? -eq 0 ]; then
+            echo "开始编译..."
+            make -j$(nproc) > /dev/null 2>&1
+            
+            if [ $? -eq 0 ]; then
+                echo "开始系统安装..."
+                sudo make install > /dev/null 2>&1
+                
+                if [ $? -eq 0 ]; then
+                    echo "[成功] cJSON库编译并安装完成"
+                    # 验证安装
+                    if [ -f "/usr/local/lib/libcjson.so" ] || [ -f "/usr/local/lib/libcjson.a" ]; then
+                        echo "  ✅ 库文件安装成功: /usr/local/lib/"
+                        echo "  ✅ 头文件安装成功: /usr/local/include/cjson/"
+                    else
+                        echo "  ⚠️ 库文件位置可能不同，但安装命令成功执行"
+                    fi
+                else
+                    echo "[失败] cJSON库系统安装失败，但本地编译成功"
+                    echo "  库文件位置: $CJSON_DIR/build/"
+                fi
+            else
+                echo "[失败] cJSON库编译失败"
+            fi
+        else
+            echo "[失败] cmake配置失败"
+        fi
+        
+        # 返回原目录
+        cd "$MAIN_DIR"
+    else
+        echo "[失败] cJSON源码目录不存在"
+    fi
 fi
+echo "========================================"
+echo ""
 
 # 配置动态链接库
 echo "=> 配置动态链接库"
@@ -418,14 +498,27 @@ echo "  模型位置: $(pwd)/moxi"
 echo "  代码位置: $(pwd)/chenxu"
 echo "  测试脚本: $(pwd)/test_vosk.py"
 echo "  cJSON位置: $HOME_DIR/cJSON"
+echo "  cJSON系统库: /usr/local/lib/libcjson.so"
+echo "  cJSON头文件: /usr/local/include/cjson/"
 echo "========================================"
 echo "下一步建议:"
 echo "1. 重启系统使所有更改生效"
 echo "2. 检查chenxu目录中的项目"
 echo "3. 在terminator中测试程序"
-echo "4. 如果关键模型不存在或测试失败:"
+echo "4. ROS 环境配置:"
+echo "   a. source /opt/ros/noetic/setup.bash"
+echo "   b. 编译 ROS 工作空间: cd /path/to/workspace && catkin_make"
+echo "   c. source devel/setup.bash"
+echo "5. 如果关键模型不存在或测试失败:"
 echo "   a. 手动下载模型: https://alphacephei.com/vosk/models"
 echo "   b. 将模型zip文件放入 moxi/ 目录"
 echo "   c. 重新运行此脚本"
-echo "5. 音频格式要求: 16kHz, 16bit, 单声道WAV"
+echo "6. 音频格式要求: 16kHz, 16bit, 单声道WAV"
+echo "7. 如果cJSON库未正确安装:"
+echo "   a. 检查是否有网络连接到GitHub"
+echo "   b. 确保已安装git和cmake"
+echo "   c. 手动编译: cd $HOME_DIR/cJSON && mkdir build && cd build && cmake .. && make && sudo make install"
+echo "8. ROS 包验证命令:"
+echo "   rospack find [包名]  # 验证包是否安装"
+echo "   rosrun [包名] [节点]  # 运行 ROS 节点"
 echo "========================================"

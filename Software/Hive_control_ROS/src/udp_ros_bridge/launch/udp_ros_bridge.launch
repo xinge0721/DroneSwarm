@@ -1,0 +1,5 @@
+<launch>
+    <node name="udp_ros_bridge" pkg="udp_ros_bridge" type="udp_ros_bridge" output="screen">
+        <param name="port" value="11451" />
+    </node>
+</launch>

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(swarm_data_processor)
+project(gazebo_simulator)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,9 +8,36 @@ project(swarm_data_processor)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  amcl
+  controller_manager
+  dynamic_reconfigure
+  gazebo_plugins
+  gazebo_ros
+  gazebo_ros_control
+  geometry_msgs
+  gmapping
+  hector_mapping
+  hector_nav_msgs
+  joint_state_publisher
+  map_server
+  mavros
+  mavros_msgs
+  move_base
+  nav_msgs
+  robot_state_publisher
+  rosbag
   roscpp
+  roslaunch
   rospy
+  rviz
+  sensor_msgs
   std_msgs
+  tf2
+  tf2_geometry_msgs
+  tf2_ros
+  urdf
+  visualization_msgs
+  xacro
 )
 
 ## System dependencies are found with CMake's conventions
@@ -70,7 +97,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
+#   geometry_msgs#   mavros_msgs#   nav_msgs#   sensor_msgs#   std_msgs#   tf2_geometry_msgs#   visualization_msgs
 # )
 
 ################################################
@@ -104,8 +131,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES swarm_data_processor
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+#  LIBRARIES gazebo_simulator
+#  CATKIN_DEPENDS amcl cartographer_ros controller_manager dynamic_reconfigure gazebo_plugins gazebo_ros gazebo_ros_control geometry_msgs gmapping hector_slam joint_state_publisher map_server mavros mavros_msgs move_base nav_msgs robot_state_publisher rosbag roscpp roslaunch rospy rviz sensor_msgs slam_toolbox std_msgs tf2 tf2_geometry_msgs tf2_ros urdf visualization_msgs xacro
 #  DEPENDS system_lib
 )
 
@@ -116,13 +143,13 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-   include
+# include
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/swarm_data_processor.cpp
+#   src/${PROJECT_NAME}/gazebo_simulator.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -133,21 +160,20 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(swarm_data_processor src/mian.cpp
-                                    # src/UDP/UDP.cpp)
+# add_executable(${PROJECT_NAME}_node src/gazebo_simulator_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
-  
+
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(swarm_data_processor
+# target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
 
@@ -198,7 +224,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_swarm_data_processor.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_gazebo_simulator.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
