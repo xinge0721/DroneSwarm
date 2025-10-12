@@ -1,6 +1,8 @@
 # ROS generated files
-build/
+build/*
 build
+Software/Hive_control_ROS/build/*
+Software/Hive_control_ROS/devel/*
 devel/
 logs/
 install/
@@ -9,6 +11,8 @@ vosk-model-cn-kaldi-multicn-0.15
 # Catkin workspace files
 .catkin_workspace
 .catkin_tools/
+chenxu/
+cJSON/
 
 # IDE files
 .vscode/
