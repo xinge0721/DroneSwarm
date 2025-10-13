@@ -5,51 +5,61 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string>
-#include <functional>
 #include <queue>
 #include <mutex>
 #include <vector>
-#include <type_traits>
-#include <stdexcept>
-#include <iostream>
-#include <json/json.h>
 
-// 通用UDP消息结构模板
-template<typename DataType>
-struct UDPMessage {
-    DataType data;              // 支持泛型数据
-    std::string client_ip;
-    int client_port;
-};
-
-template<typename DataType>
+/**
+ * @brief UDP通信类
+ * @note 简化版本，只处理原始字节数据，线程安全
+ */
 class UDP {
 public:
+    /**
+     * @brief 构造函数
+     * @param port 监听端口号，默认8888
+     */
     UDP(int port = 8888);
+    
+    /**
+     * @brief 析构函数，自动停止服务并清理资源
+     */
     ~UDP();
     
-    // 开始监听
+    /**
+     * @brief 开始监听UDP端口
+     * @note 在新线程中运行接收循环
+     */
     void startListening();
-    // 停止服务
+    
+    /**
+     * @brief 停止UDP服务
+     * @note 关闭socket并停止接收线程
+     */
     void stop();
     
-    // 发送数据到指定客户端（模板化）
-    bool sendTo(const DataType& message, const std::string& ip, int port);
+    /**
+     * @brief 发送数据到指定客户端
+     * @param data 要发送的原始字节数据
+     * @param ip 目标IP地址
+     * @param port 目标端口号
+     * @return 发送成功返回true，失败返回false
+     */
+    bool sendTo(const std::vector<uint8_t>& data, const std::string& ip, int port);
     
-    // 设置消息接收回调函数（模板化）
-    void setMessageCallback(std::function<void(const DataType&, const std::string&, int)> callback);
+    /**
+     * @brief 获取接收到的消息队列
+     * @return 包含所有未处理消息的队列，获取后队列会被清空
+     * @note 线程安全，使用swap操作避免拷贝
+     */
+    std::queue<std::vector<uint8_t>> getMessageQueue();
     
-    // 从缓存中获取接收到的消息
-    bool getReceivedMessage(UDPMessage<DataType>& message);
-    
-    // 获取整个消息队列（与DroneData<T>配合使用）
-    std::queue<DataType> getMessageQueue();
-    
-    // 获取缓存中消息数量
+    /**
+     * @brief 获取缓存中消息数量
+     * @return 当前队列中的消息数量
+     * @note 线程安全
+     */
     size_t getMessageCount();
-    
-    // 清空消息缓存
-    void clearMessageCache();
 
 private:
     // 套接字文件描述符
@@ -61,50 +71,16 @@ private:
     // 服务器端口号
     int server_port;
     
-    // 模板化消息接收回调函数
-    std::function<void(const DataType&, const std::string&, int)> message_callback;
+    // 消息缓存队列
+    std::queue<std::vector<uint8_t>> message_queue;
+    // 队列访问互斥锁
+    std::mutex queue_mutex;
     
-    // 模板化消息缓存队列
-    std::queue<UDPMessage<DataType>> message_cache;
-    // 缓存访问互斥锁
-    std::mutex cache_mutex;
-    
-    // 接收循环
+    /**
+     * @brief 接收循环（在独立线程中运行）
+     * @note 持续接收UDP数据并存入队列
+     */
     void receiveLoop();
-    
-    // 数据转换辅助方法
-    DataType convertRawData(const char* buffer, size_t length);
-    std::vector<uint8_t> serializeData(const DataType& data);
 };
-
-
-// ====================== 模板特化声明 ======================
-// 注意：模板特化必须在使用之前声明
-
-// 字符串类型特化声明
-template<>
-std::string UDP<std::string>::convertRawData(const char* buffer, size_t length);
-
-template<>
-std::vector<uint8_t> UDP<std::string>::serializeData(const std::string& data);
-
-// JSON类型特化声明
-template<>
-Json::Value UDP<Json::Value>::convertRawData(const char* buffer, size_t length);
-
-template<>
-std::vector<uint8_t> UDP<Json::Value>::serializeData(const Json::Value& data);
-
-// 二进制类型特化声明
-template<>
-std::vector<uint8_t> UDP<std::vector<uint8_t>>::convertRawData(const char* buffer, size_t length);
-
-template<>
-std::vector<uint8_t> UDP<std::vector<uint8_t>>::serializeData(const std::vector<uint8_t>& data);
-
-// 显式实例化声明（支持常用类型）
-extern template class UDP<std::string>;
-extern template class UDP<Json::Value>;
-extern template class UDP<std::vector<uint8_t>>;
 
 #endif // UDP_H

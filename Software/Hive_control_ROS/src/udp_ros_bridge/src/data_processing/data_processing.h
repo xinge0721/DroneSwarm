@@ -60,6 +60,7 @@ class DroneData
 {
 private:
     DataProcessing* data = NULL;
+    int size = 0;
 
 public:
     //  =================== 构造函数 ===================
@@ -71,6 +72,7 @@ public:
             return;
         }
         this->data = new DataProcessing[cont];//创建无人机数据数组
+        this->size = cont;
     }
     //  =================== 析构函数 ===================
     ~DroneData()
@@ -80,6 +82,56 @@ public:
             delete[] data;
             data = NULL;
         }
+    }
+
+
+    //  =================== 迭代器 ===================
+    DataProcessing* begin()
+    {   
+        if (data == nullptr) {
+            throw std::runtime_error("DroneData未正确初始化，data指针为空");
+        }
+        return data;
+    }
+    DataProcessing* end()
+    {
+        if (data == nullptr) {
+            throw std::runtime_error("DroneData未正确初始化，data指针为空");
+        }
+        return data + size;
+    }
+
+    // =================== 运算符 ===================
+    DataProcessing& operator[](int index)
+    {
+        if (data == nullptr) {
+            throw std::runtime_error("DroneData未正确初始化，data指针为空");
+        }
+        if (index < 0 || index >= size) {
+            throw std::out_of_range("DroneData下标越界");
+        }
+        return data[index];
+    }
+    DataProcessing& operator[](int index) const
+    {
+        if (data == nullptr) {
+            throw std::runtime_error("DroneData未正确初始化，data指针为空");
+        }
+        if (index < 0 || index >= size) {
+            throw std::out_of_range("DroneData下标越界");
+        }
+        return data[index];
+    }
+
+    // =================== 大小 ===================
+    int size() const
+    {
+        return size;
+    }
+    // =================== 判断是否为空 ===================
+    bool empty() const
+    {
+        return size == 0 && data == nullptr;
     }
 
     //  =================== 遍历缓存 ===================

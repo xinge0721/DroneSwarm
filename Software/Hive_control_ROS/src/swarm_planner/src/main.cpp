@@ -1,6 +1,4 @@
-<<<<<<< HEAD
 // 功能包：语音指挥+轨迹生成
-=======
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include <iostream>
@@ -50,4 +48,3 @@ int main(int argc, char **argv)
     }
     return 0;
 }
->>>>>>> origin/moyu
