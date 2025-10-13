@@ -1,3 +1,5 @@
+// 功能包：UDP与ROS桥接
+
 
 #include "ros/ros.h"
 #include "std_msgs/String.h" //普通文本类型的消息
@@ -6,12 +8,16 @@
 #include "./data_processing/data_processing.h"
 
 // 创建不同类型的UDP服务器和数据处理器
+// UDP服务器
 UDP<std::string> udp_string(8888);          // 字符串数据
 UDP<Json::Value> udp_json(8889);         // JSON数据  
 UDP<std::vector<uint8_t>> udp_binary(8890); // 二进制数据
-
+// 数据处理器
+// 字符串10架无人机
 DroneData<std::string> string_processor(10);
+// JSON10架无人机
 DroneData<Json::Value> json_processor(10);
+// 二进制10架无人机
 DroneData<std::vector<uint8_t>> binary_processor(10);
 
 int main(int argc, char  *argv[])
