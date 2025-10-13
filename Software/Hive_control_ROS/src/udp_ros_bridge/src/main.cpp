@@ -8,11 +8,15 @@
 // 创建不同类型的UDP服务器和数据处理器
 UDP<std::string> udp_string(8888);          // 字符串数据
 UDP<Json::Value> udp_json(8889);         // JSON数据  
-UDP<std::vector<uint8_t>> udp_binary(8890); // 二进制数据
+UDP<std::vector<uint8_t>> udp_binary(9600); // 二进制数据
 
 DroneData<std::string> string_processor(10);
 DroneData<Json::Value> json_processor(10);
 DroneData<std::vector<uint8_t>> binary_processor(10);
+
+
+
+
 
 int main(int argc, char  *argv[])
 {   
