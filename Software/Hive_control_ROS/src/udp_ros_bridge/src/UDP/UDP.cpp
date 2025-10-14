@@ -140,7 +140,7 @@ void UDP::receiveLoop() {
 }
 
 // ====================== 从缓冲区取数据，解析IP和端口 ======================
-bool UDP::getClientFromBuffer(ClientAddress& client_addr) {
+bool UDP::getClientFromBuffer() {
     if (sockfd < 0) {
         return false;
     }
@@ -153,6 +153,7 @@ bool UDP::getClientFromBuffer(ClientAddress& client_addr) {
                                (struct sockaddr*)&client_sockaddr, &client_len);
     
     if (recv_len > 0) {
+        ClientAddress client_addr;
         client_addr.ip = inet_ntoa(client_sockaddr.sin_addr);
         client_addr.port = ntohs(client_sockaddr.sin_port);
         

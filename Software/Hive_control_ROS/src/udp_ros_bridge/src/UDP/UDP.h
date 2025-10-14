@@ -68,11 +68,10 @@ public:
     size_t getMessageCount();
 
     /**
-     * @brief 从缓冲区取数据，解析IP和端口，放到结构体里
-     * @param client_addr [out] 存放解析出的IP和端口
+     * @brief 从缓冲区取数据，解析IP和端口，放到队列里
      * @return 成功返回true，失败返回false
      */
-    bool getClientFromBuffer(ClientAddress& client_addr);
+    bool getClientFromBuffer();
 
     /**
      * @brief 获取客户端地址队列
@@ -96,8 +95,8 @@ private:
     int server_port;
     
     // 消息缓存队列
-    std::queue<std::vector<uint8_t>,std::string,int> message_queue;
-    // 新的客户端地址队列
+    std::queue<std::vector<uint8_t>> message_queue;
+    // 初始化 地址队列
     std::queue<ClientAddress> client_address_queue;
     // 队列访问互斥锁
     std::mutex queue_mutex;

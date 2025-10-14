@@ -52,7 +52,8 @@ int main(int argc, char  *argv[])
     //逻辑(一秒10次)
     ros::Rate Sleep_time(1);
     swarm_planner::swarm ros_msg;
-
+    // 关闭udp服务器
+    udp_binary.manageThread();
 
     // 初始化5秒
     time_t start_time = time(NULL);
@@ -63,13 +64,26 @@ int main(int argc, char  *argv[])
         {
             break;
         }
-        // 获取二进制数据
-        auto binary_queue = udp_binary.getMessageQueue();
-        if (!binary_queue.empty()) {
-            std::cout << "处理 " << binary_queue.size() << " 条二进制消息" << std::endl;
-            
+        // 不断刷新，获取数据，获取IP和端口
+        udp_binary.getClientFromBuffer();
+
+    }
+
+    // 获取客户端地址队列
+    auto client_address_queue = udp_binary.getClientAddressQueue();
+    if (!client_address_queue.empty()) {
+        std::cout << "处理 " << client_address_queue.size() << " 条客户端地址" << std::endl;
+        for(auto &client_address : client_address_queue) {
+            std::cout << "客户端地址: " << client_address.ip << ":" << client_address.port << std::endl;
+            // 注册无人机
+            swarm_registry.registerDrone(client_address.ip, client_address.port);
         }
     }
+
+    // 开启udp服务器
+    udp_binary.manageThread();
+    
+    // 注册无人机后，开始接收数据
     //节点不死
     while (ros::ok())
     {
