@@ -1,5 +1,5 @@
 #include "SwarmRegistry.h"
-
+#include <stdexcept>
 
 //  ==================扩容函数==================
 // 参数一：扩容倍数
@@ -24,11 +24,19 @@ void SwarmRegistry::recapacity(int new_capacity )
 
 DroneInfo& SwarmRegistry::operator[](int index)
 {
+    if (index < 0 || index >= count)
+    {
+        throw std::out_of_range("SwarmRegistry下标越界");
+    }
     return this->drone_info_cache[index];
 }
 
 DroneInfo& SwarmRegistry::operator[](int index) const
 {
+    if (index < 0 || index >= count)
+    {
+        throw std::out_of_range("SwarmRegistry下标越界");
+    }
     return this->drone_info_cache[index];
 }
 
@@ -72,7 +80,7 @@ uint8_t SwarmRegistry::registerDrone(const std::string& ip, int port)
     if (ip.empty() || port <= 0 || port > 65535) 
     {
         // 返回一个无效ID
-        return 0xFF;
+        return ERROR_ID;
     }
 
     // 检查是否已经注册（防止重复注册）
@@ -96,7 +104,7 @@ uint8_t SwarmRegistry::registerDrone(const std::string& ip, int port)
 }
 
 // ================== 删除无人机信息 ==================
-// 参数一：删除数据的索引
+// 参数一：删除数据的iD
 void SwarmRegistry::removeDroneInfo(uint8_t id)
 {
 

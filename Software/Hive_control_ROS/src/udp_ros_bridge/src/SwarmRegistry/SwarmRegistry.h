@@ -5,8 +5,7 @@
 #include <vector>
 #include <cstdint>
 
-
-
+#define ERROR_ID 0xFF
 
 // 开机管理类并管理状态
 class SwarmRegistry {
@@ -61,20 +60,18 @@ public:
     uint8_t registerDrone(const std::string& ip, int port);
 
     // ================== 删除无人机信息 ==================
-    // 参数一：删除数据的IDs
+    // 参数一：删除数据的ID
     void removeDroneInfo(uint8_t id);
     // ================== 获取无人机信息 ==================
     DroneInfo* getDroneInfo(uint8_t id);
 
 
     // ================== 获取无人机数量 ==================
-    int getDroneCount(){return count;}
-    // ================== 获取无人机信息缓存 ==================
-    DroneInfo* getDroneInfoCache(){return drone_info_cache;}
+    int getDroneCount() const{return count;} 
     // ================== 获取无人机信息缓存长度 ==================
-    int getDroneInfoCacheLength(){return capacity;}
+    int getDroneInfoCacheLength() const{return capacity;} 
     //  ==================判断是否空 ==================
-    bool isEmpty(){return count == 0;}
+    bool isEmpty() const{return count == 0;} 
 
 };
 
