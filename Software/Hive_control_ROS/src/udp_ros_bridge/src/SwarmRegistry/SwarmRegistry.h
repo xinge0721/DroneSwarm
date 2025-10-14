@@ -56,6 +56,15 @@ public:
     DroneInfo& operator[](int index);
     DroneInfo& operator[](int index) const;
 
+    // ===================迭代器===================
+    DroneInfo* begin()
+    {
+        return drone_info_cache;
+    }
+    DroneInfo* end()
+    {
+        return drone_info_cache + count;
+    }
     // ================== 注册无人机 ==================
     uint8_t registerDrone(const std::string& ip, int port);
 
@@ -72,6 +81,8 @@ public:
     int getDroneInfoCacheLength() const{return capacity;} 
     //  ==================判断是否空 ==================
     bool isEmpty() const{return count == 0;} 
+
+
 
 };
 

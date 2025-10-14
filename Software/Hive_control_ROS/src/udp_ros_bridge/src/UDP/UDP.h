@@ -9,6 +9,12 @@
 #include <mutex>
 #include <vector>
 
+// 存放IP和端口的结构体
+struct ClientAddress {
+    std::string ip;
+    int port;
+};
+
 /**
  * @brief UDP通信类
  * @note 简化版本，只处理原始字节数据，线程安全
@@ -45,7 +51,7 @@ public:
      * @param port 目标端口号
      * @return 发送成功返回true，失败返回false
      */
-    bool sendTo(const std::vector<uint8_t>& data, const std::string& ip, int port);
+    bool sendTo(const std::vector<uint8_t>& data);
     
     /**
      * @brief 获取接收到的消息队列
@@ -61,6 +67,24 @@ public:
      */
     size_t getMessageCount();
 
+    /**
+     * @brief 从缓冲区取数据，解析IP和端口，放到结构体里
+     * @param client_addr [out] 存放解析出的IP和端口
+     * @return 成功返回true，失败返回false
+     */
+    bool getClientFromBuffer(ClientAddress& client_addr);
+
+    /**
+     * @brief 获取客户端地址队列
+     * @return 包含所有客户端地址的队列
+     */
+    std::queue<ClientAddress> getClientAddressQueue();
+
+    /**
+     * @brief 线程管理封装
+     */
+    void manageThread();
+
 private:
     // 套接字文件描述符
     int sockfd;
@@ -72,7 +96,9 @@ private:
     int server_port;
     
     // 消息缓存队列
-    std::queue<std::vector<uint8_t>> message_queue;
+    std::queue<std::vector<uint8_t>,std::string,int> message_queue;
+    // 新的客户端地址队列
+    std::queue<ClientAddress> client_address_queue;
     // 队列访问互斥锁
     std::mutex queue_mutex;
     

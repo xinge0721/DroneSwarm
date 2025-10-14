@@ -15,7 +15,7 @@
 #include <stdexcept>    // std::runtime_error
 #include "./../UDP/UDP.h"
 //  ============================= 公共变量声明 ==================
-
+extern SwarmRegistry swarm_registry;
 
 // ============================= 类声明 ==========================
 // 无人机参数类
@@ -51,6 +51,10 @@ public:
     void ParseData(const Json::Value& data);
     void ParseData(const uint8_t* data);
     void ParseData(const std::vector<uint8_t>& data); 
+
+    // 更新 初始化数据
+    void Init_ParseData(const std::vector<Json::Value>& data);
+
 };
 
 // 无人机数据

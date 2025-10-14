@@ -138,3 +138,46 @@ void UDP::receiveLoop() {
         }
     }
 }
+
+// ====================== 从缓冲区取数据，解析IP和端口 ======================
+bool UDP::getClientFromBuffer(ClientAddress& client_addr) {
+    if (sockfd < 0) {
+        return false;
+    }
+    
+    char buffer[1024];
+    struct sockaddr_in client_sockaddr;
+    socklen_t client_len = sizeof(client_sockaddr);
+    
+    ssize_t recv_len = recvfrom(sockfd, buffer, sizeof(buffer), MSG_DONTWAIT,
+                               (struct sockaddr*)&client_sockaddr, &client_len);
+    
+    if (recv_len > 0) {
+        client_addr.ip = inet_ntoa(client_sockaddr.sin_addr);
+        client_addr.port = ntohs(client_sockaddr.sin_port);
+        
+        std::lock_guard<std::mutex> lock(queue_mutex);
+        client_address_queue.push(client_addr);
+        
+        return true;
+    }
+    
+    return false;
+}
+
+// ====================== 获取客户端地址队列 ======================
+std::queue<ClientAddress> UDP::getClientAddressQueue() {
+    std::lock_guard<std::mutex> lock(queue_mutex);
+    std::queue<ClientAddress> result;
+    result.swap(client_address_queue);
+    return result;
+}
+
+// ====================== 线程管理封装 ======================
+void UDP::manageThread() {
+    if (running) {
+        stop();
+    } else {
+        startListening();
+    }
+}

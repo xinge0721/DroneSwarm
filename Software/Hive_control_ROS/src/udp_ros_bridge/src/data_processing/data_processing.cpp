@@ -320,3 +320,18 @@ void DataProcessing::ParseData(const std::vector<uint8_t>& data)
         ParseData(data.data());  // 调用已有的二进制数据解析方法
     }
 }
+
+// 数据格式
+// IP和端口 的数组
+void DataProcessing::Init_ParseData(const std::vector<Json::Value>& data)
+{
+    for (auto &item : data)
+    {
+        if (item.isMember("ip") && item["ip"].isString() && item.isMember("port") && item["port"].isInt())
+        {
+            std::string ip = item["ip"].asString();
+            int port = item["port"].asInt();
+            swarm_registry.registerDrone(ip, port);
+        }
+    }
+}

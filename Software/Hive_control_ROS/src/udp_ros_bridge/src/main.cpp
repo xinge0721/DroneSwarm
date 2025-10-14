@@ -7,12 +7,14 @@
 #include "./UDP/UDP.h"
 #include "./data_processing/data_processing.h"
 #include "swarm_planner/swarm.h"
+#include "time.h"
+#include "./SwarmRegistry/SwarmRegistry.h"
 // UDP服务器（只使用二进制数据）
 UDP udp_binary(9600);
 
 // 二进制数据处理器（10架无人机）
 DroneData<std::vector<uint8_t>> binary_processor(10);
-
+SwarmRegistry swarm_registry;
 // 路径规划结果 
 // 返回给无人机
 // 参数一 ： 无人机id
@@ -51,6 +53,23 @@ int main(int argc, char  *argv[])
     ros::Rate Sleep_time(1);
     swarm_planner::swarm ros_msg;
 
+
+    // 初始化5秒
+    time_t start_time = time(NULL);
+    while(ros::ok())
+    {
+        // 到点后退出
+        if(time(NULL) - start_time > 5)
+        {
+            break;
+        }
+        // 获取二进制数据
+        auto binary_queue = udp_binary.getMessageQueue();
+        if (!binary_queue.empty()) {
+            std::cout << "处理 " << binary_queue.size() << " 条二进制消息" << std::endl;
+            
+        }
+    }
     //节点不死
     while (ros::ok())
     {
