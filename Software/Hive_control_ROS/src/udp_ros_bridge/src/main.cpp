@@ -13,8 +13,9 @@
 UDP udp_binary(9600);
 
 // 二进制数据处理器（10架无人机）
-DroneData<std::vector<uint8_t>> binary_processor(10);
+DroneData<std::vector<uint8_t>> binary_processor;
 SwarmRegistry swarm_registry;
+
 // 路径规划结果 
 // 返回给无人机
 // 参数一 ： 无人机id
@@ -24,8 +25,6 @@ void stringCallback(const std_msgs::String::ConstPtr& msg)
 {
     std::cout << "收到字符串消息: " << msg->data << std::endl;
 }
-
-
 
 int main(int argc, char  *argv[])
 {   
@@ -49,13 +48,13 @@ int main(int argc, char  *argv[])
     std::cout << "启动UDP服务器..." << std::endl;
     udp_binary.startListening();
 
-    //逻辑(一秒10次)
+    //延迟初始化
     ros::Rate Sleep_time(1);
     swarm_planner::swarm ros_msg;
     // 关闭udp服务器
     udp_binary.manageThread();
 
-    // 初始化5秒
+    // 初始化5秒，获取IP和端口
     time_t start_time = time(NULL);
     while(ros::ok())
     {
@@ -66,9 +65,9 @@ int main(int argc, char  *argv[])
         }
         // 不断刷新，获取数据，获取IP和端口
         udp_binary.getClientFromBuffer();
-
     }
-
+    
+    std::vector<uint8_t> id_array;
     // 获取客户端地址队列
     auto client_address_queue = udp_binary.getClientAddressQueue();
     if (!client_address_queue.empty()) {
@@ -76,10 +75,12 @@ int main(int argc, char  *argv[])
         for(auto &client_address : client_address_queue) {
             std::cout << "客户端地址: " << client_address.ip << ":" << client_address.port << std::endl;
             // 注册无人机
-            swarm_registry.registerDrone(client_address.ip, client_address.port);
+            int id = swarm_registry.registerDrone(client_address.ip, client_address.port);
+            id_array.push_back(id);
         }
     }
-
+    // 添加无人机数据类
+    binary_processor.addData(id_array, id_array.size());
     // 开启udp服务器
     udp_binary.manageThread();
     
@@ -93,11 +94,12 @@ int main(int argc, char  *argv[])
             auto binary_queue = udp_binary.getMessageQueue();
             if (!binary_queue.empty()) {
                 std::cout << "处理 " << binary_queue.size() << " 条二进制消息" << std::endl;
+                
                 binary_processor.ParseData(binary_queue);
             }
 
             // 处理数据
-            for(auto &data : binary_processor.data)
+            for(auto &data : binary_processor)
             {
                 std::cout << "当前id: "<<data.id<<" " <<std::endl;
                 // 取出数据
@@ -116,7 +118,7 @@ int main(int argc, char  *argv[])
         }
 
         //根据前面制定的发送贫频率自动休眠 休眠时间 = 1/频率；
-        Sleep_time.sleep();
+        // Sleep_time.sleep();
         //处理回调函数
         ros::spinOnce();
     }

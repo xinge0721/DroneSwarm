@@ -68,15 +68,10 @@ private:
 
 public:
     //  =================== 构造函数 ===================
-    // 参数一：无人机数量
-    DroneData(const int cont = 0)
+    DroneData()
     {
-        if (cont <= 0)
-        {
-            return;
-        }
-        this->data = new DataProcessing[cont];//创建无人机数据数组
-        this->size = cont;
+        data = nullptr;
+        size = 0;
     }
     //  =================== 析构函数 ===================
     ~DroneData()
@@ -88,6 +83,26 @@ public:
         }
     }
 
+    //  添加无人机数据
+    // 参数一：无人机ID数组
+    // 参数二：无人机数量
+    void addData(const std::vector<uint8_t>& id, int size)
+    {
+        if (id == nullptr)
+        {
+            throw std::runtime_error("DroneData未正确初始化，data指针为空");
+        }
+        if (size <= 0)
+        {
+            throw std::runtime_error("DroneData未正确初始化，size为0");
+        }
+        this->data = new DataProcessing[this->size + size];
+        for (int i = 0; i < this->size; i++)
+        {
+            this->data[i] = id[i];
+        }
+        this->size += size;
+    }
 
     //  =================== 迭代器 ===================
     DataProcessing* begin()
