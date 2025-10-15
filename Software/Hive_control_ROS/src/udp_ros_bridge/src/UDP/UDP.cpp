@@ -176,9 +176,6 @@ std::queue<ClientAddress> UDP::getClientAddressQueue() {
 
 // ====================== 线程管理封装 ======================
 void UDP::manageThread() {
-    if (running) {
-        stop();
-    } else {
-        startListening();
-    }
+    running = !running;
+    std::cout << "接收线程已请求" << (running ? "开启" : "关闭") << std::endl;
 }
