@@ -1,7 +1,7 @@
 {
     "version":            "1.1",
     "project_name":       "UAV_ESP",
-    "project_version":    "8e03870-dirty",
+    "project_version":    "c73cea0-dirty",
     "project_path":       "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP",
     "idf_path":           "C:/esp-idf",
     "build_dir":          "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/build",
@@ -1195,7 +1195,7 @@
             "managed_reqs": [],
             "managed_priv_reqs": [ "espressif__led_strip" ],
             "file": "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/build/esp-idf/main/libmain.a",
-            "sources": [ "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/main/main.cpp", "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/Hardware/WIFI/WIFI.cpp", "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/Hardware/UDP/UDP.cpp", "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/Hardware/MPU6050/MPU6050.cpp", "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/Hardware/TIME/TIME.cpp", "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/System/delay/delay.cpp", "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/System/sys/sys.cpp" ],
+            "sources": [ "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/main/main.cpp", "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/Hardware/WIFI/WIFI.cpp", "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/Hardware/UDP/UDP.cpp", "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/Hardware/I2Cdev/I2Cdev.cpp", "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/Hardware/MPU6050/MPU6050.cpp", "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/Hardware/TIME/TIME.cpp", "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/System/delay/delay.cpp", "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/System/sys/sys.cpp" ],
             "include_dirs": [ ".", "../Hardware", "../System" ]
         },
         "mbedtls": {

@@ -6,12 +6,6 @@ void arithmetic_time(void);
 static const char *TAG = "SYS";
 // ============ 全局对象定义 ============
 TIME PID_time(arithmetic_time, 10000);  // 10ms周期定时器
-MPU6050* mpu6050 = nullptr;  // 全局指针，在 main 中初始化
-
-int16_t AccX, AccY, AccZ, GyroX, GyroY, GyroZ;
-float Temperature;
-volatile uint32_t interrupt_count = 0;  // 中断计数器，用于调试
-volatile bool mpu6050_data_ready = false;  // 数据就绪标志
 
 // ============ 系统初始化 ============
 int system_init(void)
@@ -42,13 +36,4 @@ void arithmetic_time(void)
     //     count = 0;
     //     ESP_LOGI(TAG, "定时器运行正常 - 计数: %lu", time.get_count());
     // }
-}
-
-//  ========== MPU6050 中断回调函数 ============
-void IRAM_ATTR mpu6050_Interrupt_function(void* arg)
-{
-    // ⚠️ ISR中禁止I2C通信（会使用信号量导致崩溃）
-    // 只设置标志位，让主任务在非中断上下文中读取数据
-    interrupt_count++;  // 计数，用于调试
-    mpu6050_data_ready = true;  // 设置数据就绪标志
 }
