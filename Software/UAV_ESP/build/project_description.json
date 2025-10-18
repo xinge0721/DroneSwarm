@@ -1,7 +1,7 @@
 {
     "version":            "1.1",
     "project_name":       "UAV_ESP",
-    "project_version":    "421b9dc-dirty",
+    "project_version":    "49ae21e-dirty",
     "project_path":       "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP",
     "idf_path":           "C:/esp-idf",
     "build_dir":          "G:/bianchen/xiangmu/DroneSwarm/Software/UAV_ESP/build",

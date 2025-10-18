@@ -2,23 +2,29 @@
 #define __MPU6050_H
 
 #include "esp_err.h"
-#include "../IIC/IIC.h"
+#include "driver/i2c.h"
+#include "driver/gpio.h"
 
 /**
  * @brief MPU6050六轴传感器驱动类
- * @note  封装了MPU6050的基本操作，包括读写寄存器、获取传感器数据等
+ * @note  封装了MPU6050的基本操作，内部自动完成IIC和硬件初始化
  */
 class MPU6050
 {
-private:
-    IIC& _iic;  ///< I2C通信实例的引用
-
 public:
     /**
-     * @brief  构造函数
-     * @param  iic_instance: IIC实例的引用
+     * @brief  构造函数（自动完成IIC初始化、MPU6050硬件初始化、中断配置）
+     * @param  scl_pin: I2C时钟引脚
+     * @param  sda_pin: I2C数据引脚
+     * @param  int_pin: 外部中断引脚，默认GPIO_NUM_NC表示不使用中断
+     * @param  isr_handler: 中断回调函数，默认nullptr
+     * @param  isr_arg: 中断回调函数参数，默认nullptr
      */
-    MPU6050(IIC& iic_instance);
+    MPU6050(gpio_num_t scl_pin, 
+            gpio_num_t sda_pin,
+            gpio_num_t int_pin = GPIO_NUM_NC, 
+            void (*isr_handler)(void*) = nullptr,
+            void* isr_arg = nullptr);
     
     /**
      * @brief  析构函数
@@ -80,7 +86,6 @@ public:
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 // 如果需要C风格的接口，可以在这里声明
 // void MPU6050_Init(void);
 // uint8_t MPU6050_GetID(void);

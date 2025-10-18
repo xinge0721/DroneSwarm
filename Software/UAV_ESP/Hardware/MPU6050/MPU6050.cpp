@@ -3,18 +3,21 @@
  * @file    mpu6050.cpp
  * @brief   MPU6050六轴传感器驱动程序（ESP32 I2C版本）
  * @details 使用ESP32的I2C外设与MPU6050通信
- *          - I2C引脚：GPIO21(SDA), GPIO22(SCL)
+ *          - I2C引脚：可配置
  *          - I2C时钟：100kHz
  *          - 支持读取3轴加速度和3轴陀螺仪数据
+ *          - 内部自动完成IIC和硬件初始化
+ *          - 支持可选的外部中断
  * 
  * @note    硬件连接说明：
  *          MPU6050    ESP32
  *          --------   ---------
  *          VCC   -->  3.3V
  *          GND   -->  GND
- *          SCL   -->  GPIO22 (内置上拉)
- *          SDA   -->  GPIO21 (内置上拉)
+ *          SCL   -->  可配置GPIO (内置上拉)
+ *          SDA   -->  可配置GPIO (内置上拉)
  *          AD0   -->  GND  (设置I2C地址为0x68)
+ *          INT   -->  可选GPIO (外部中断引脚)
  * 
  * @warning 【常见问题排查】
  *          1. 读取ID不是0x68 → 检查接线
@@ -22,15 +25,14 @@
  *          3. 数据全为0 → 检查MPU6050供电和初始化
  *          4. 数据跳变异常 → 检查电源稳定性
  * 
- * @version 2.0 (ESP32版本)
+ * @version 3.0 (内部初始化版本)
  * @date    2024
  ******************************************************************************
  */
 
 #include "esp_log.h"
-#include "../IIC/IIC.h"
-#include "MPU6050_Reg.h"
 #include "mpu6050.h"
+#include "MPU6050_Reg.h"
 
 static const char *TAG = "MPU6050";
 
@@ -38,15 +40,37 @@ static const char *TAG = "MPU6050";
 // AD0引脚接GND时地址为0x68，接VCC时为0x69
 #define MPU6050_ADDRESS     0x68
 
+// I2C配置参数
+#define I2C_MASTER_NUM      I2C_NUM_0
+#define I2C_MASTER_FREQ_HZ  100000
+
 /**
  * @brief  MPU6050构造函数
- * @param  iic_instance: IIC实例的引用
- * @note   初始化MPU6050并配置各项参数
+ * @param  scl_pin: I2C时钟引脚
+ * @param  sda_pin: I2C数据引脚
+ * @param  int_pin: 外部中断引脚，默认GPIO_NUM_NC表示不使用中断
+ * @param  isr_handler: 中断回调函数
+ * @param  isr_arg: 中断回调函数参数
+ * @note   自动完成I2C初始化、MPU6050硬件初始化、中断配置
  */
-MPU6050::MPU6050(IIC& iic_instance) : _iic(iic_instance)
+MPU6050::MPU6050(gpio_num_t scl_pin, gpio_num_t sda_pin, gpio_num_t int_pin, void (*isr_handler)(void*), void* isr_arg)
 {
     ESP_LOGI(TAG, "Initializing MPU6050...");
     
+    // ===== I2C初始化 =====
+    i2c_config_t conf = {
+        .mode = I2C_MODE_MASTER,
+        .sda_io_num = sda_pin,
+        .scl_io_num = scl_pin,
+        .sda_pullup_en = GPIO_PULLUP_ENABLE,
+        .scl_pullup_en = GPIO_PULLUP_ENABLE,
+        .master = {.clk_speed = I2C_MASTER_FREQ_HZ},
+    };
+    i2c_param_config(I2C_MASTER_NUM, &conf);
+    i2c_driver_install(I2C_MASTER_NUM, conf.mode, 0, 0, 0);
+    ESP_LOGI(TAG, "I2C initialized (SCL=%d, SDA=%d)", scl_pin, sda_pin);
+    
+    // ===== MPU6050硬件初始化 =====
     // 配置电源管理寄存器1：选择时钟源，退出睡眠模式
     WriteReg(MPU6050_PWR_MGMT_1, 0x01);    // 0x01=选择X轴陀螺仪作为时钟源
     
@@ -65,7 +89,27 @@ MPU6050::MPU6050(IIC& iic_instance) : _iic(iic_instance)
     // 配置加速度计量程：±16g
     WriteReg(MPU6050_ACCEL_CONFIG, 0x18);  // 0x18=±16g满量程
     
-    ESP_LOGI(TAG, "MPU6050 initialized successfully");
+    ESP_LOGI(TAG, "MPU6050 hardware initialized");
+    
+    // ===== 外部中断初始化（可选）=====
+    if (int_pin != GPIO_NUM_NC) {
+        gpio_config_t io_conf = {
+            .pin_bit_mask = (1ULL << int_pin),
+            .mode = GPIO_MODE_INPUT,
+            .pull_up_en = GPIO_PULLUP_ENABLE,
+            .pull_down_en = GPIO_PULLDOWN_DISABLE,
+            .intr_type = GPIO_INTR_POSEDGE,
+        };
+        gpio_config(&io_conf);
+        gpio_install_isr_service(0);
+        
+        if (isr_handler) {
+            gpio_isr_handler_add(int_pin, isr_handler, isr_arg);
+            ESP_LOGI(TAG, "MPU6050 interrupt enabled on GPIO%d", int_pin);
+        }
+    }
+    
+    ESP_LOGI(TAG, "MPU6050 initialization complete");
 }
 
 /**
@@ -76,7 +120,15 @@ MPU6050::MPU6050(IIC& iic_instance) : _iic(iic_instance)
  */
 esp_err_t MPU6050::WriteReg(uint8_t RegAddress, uint8_t Data)
 {
-    esp_err_t ret = _iic.Write(MPU6050_ADDRESS, RegAddress, Data);
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, (MPU6050_ADDRESS << 1) | I2C_MASTER_WRITE, true);
+    i2c_master_write_byte(cmd, RegAddress, true);
+    i2c_master_write_byte(cmd, Data, true);
+    i2c_master_stop(cmd);
+    esp_err_t ret = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, 1000 / portTICK_PERIOD_MS);
+    i2c_cmd_link_delete(cmd);
+    
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Write register 0x%02X failed: %s", RegAddress, esp_err_to_name(ret));
     }
@@ -91,7 +143,17 @@ esp_err_t MPU6050::WriteReg(uint8_t RegAddress, uint8_t Data)
 uint8_t MPU6050::ReadReg(uint8_t RegAddress)
 {
     uint8_t data = 0;
-    esp_err_t ret = _iic.Read(MPU6050_ADDRESS, RegAddress, &data);
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, (MPU6050_ADDRESS << 1) | I2C_MASTER_WRITE, true);
+    i2c_master_write_byte(cmd, RegAddress, true);
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, (MPU6050_ADDRESS << 1) | I2C_MASTER_READ, true);
+    i2c_master_read_byte(cmd, &data, I2C_MASTER_NACK);
+    i2c_master_stop(cmd);
+    esp_err_t ret = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, 1000 / portTICK_PERIOD_MS);
+    i2c_cmd_link_delete(cmd);
+    
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Read register 0x%02X failed: %s", RegAddress, esp_err_to_name(ret));
         return 0;

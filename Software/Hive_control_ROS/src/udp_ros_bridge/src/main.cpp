@@ -1,20 +1,18 @@
 // 功能包：UDP与ROS桥接
+#include "main.h"
 
-
-#include "ros/ros.h"
-#include "std_msgs/String.h" //普通文本类型的消息
-#include <sstream>
-#include "./UDP/UDP.h"
-#include "./data_processing/data_processing.h"
-#include "swarm_planner/swarm.h"
-#include "time.h"
-#include "./SwarmRegistry/SwarmRegistry.h"
 // UDP服务器（只使用二进制数据）
 UDP udp_binary(9600);
 
 // 二进制数据处理器（10架无人机）
 DroneData<std::vector<uint8_t>> binary_processor(10);
+
+// 无人机注册表
 SwarmRegistry swarm_registry;
+
+// 初始化时间
+#define INIT_TIME 5
+
 // 路径规划结果 
 // 返回给无人机
 // 参数一 ： 无人机id
@@ -36,6 +34,7 @@ int main(int argc, char  *argv[])
     // 参数1和参数2 后期为节点传值会使用
     // 参数3 是节点名称，是一个标识符，需要保证运行后，在 ROS 网络拓扑中唯一
     ros::init(argc,argv,"swarm_data_processor");
+    
     //3.实例化 ROS 句柄
     ros::NodeHandle nh;//该类封装了 ROS 中的一些常用功能
 
@@ -60,12 +59,13 @@ int main(int argc, char  *argv[])
     while(ros::ok())
     {
         // 到点后退出
-        if(time(NULL) - start_time > 5)
+        if(time(NULL) - start_time > INIT_TIME)
         {
             break;
         }
         // 不断刷新，获取数据，获取IP和端口
         udp_binary.getClientFromBuffer();
+        Sleep_time.sleep();
 
     }
 
@@ -82,7 +82,7 @@ int main(int argc, char  *argv[])
 
     // 开启udp服务器
     udp_binary.manageThread();
-    
+
     // 注册无人机后，开始接收数据
     //节点不死
     while (ros::ok())

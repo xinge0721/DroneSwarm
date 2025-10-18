@@ -20,6 +20,9 @@ cJSON/
 *.swp
 *.swo
 *~
+*.cmakelists.txt
+*.cmake
+*.cmake.in
 
 # Compiled Object files
 *.o
