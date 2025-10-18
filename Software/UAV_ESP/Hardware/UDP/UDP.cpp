@@ -5,9 +5,10 @@ static const char *TAG = "UDP";
 //  ================ 创建UDP客户端对象 ================
 UDP::UDP(const char* server_ip, uint16_t port)
 {
-    is_connected = ;
+    // 初始化连接状态
+    is_connected = false;
     memset(&server_addr, 0, sizeof(server_addr));
-    
+
     ESP_LOGI(TAG, "UDP客户端对象创建完成");
 
     // 创建UDP套接字

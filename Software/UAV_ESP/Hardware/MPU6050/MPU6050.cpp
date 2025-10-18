@@ -53,7 +53,8 @@ static const char *TAG = "MPU6050";
  * @param  isr_arg: 中断回调函数参数
  * @note   自动完成I2C初始化、MPU6050硬件初始化、中断配置
  */
-MPU6050::MPU6050(gpio_num_t scl_pin, gpio_num_t sda_pin, gpio_num_t int_pin, void (*isr_handler)(void*), void* isr_arg)
+MPU6050::MPU6050(gpio_num_t scl_pin, gpio_num_t sda_pin, gpio_num_t int_pin, 
+                    void (*isr_handler)(void*), void* isr_arg)
 {
     ESP_LOGI(TAG, "Initializing MPU6050...");
     
@@ -93,24 +94,39 @@ MPU6050::MPU6050(gpio_num_t scl_pin, gpio_num_t sda_pin, gpio_num_t int_pin, voi
     
     // ===== 外部中断初始化（可选）=====
     if (int_pin != GPIO_NUM_NC) {
+        // 配置MPU6050中断引脚：
+        // bit7=0: 高电平有效
+        // bit6=0: 推挽输出
+        // bit5=1: Latch模式（保持中断直到读取INT_STATUS）
+        // bit4=1: 读任何寄存器都清除中断
+        WriteReg(MPU6050_INT_PIN_CFG, 0x30);   // 0x30 = Latch + 任意读清除
+        
+        // 使能数据就绪中断
+        WriteReg(MPU6050_INT_ENABLE, 0x01);    // 0x01=使能DATA_RDY中断
+        ESP_LOGI(TAG, "MPU6050 interrupt registers configured (DATA_RDY enabled)");
+        
         gpio_config_t io_conf = {
             .pin_bit_mask = (1ULL << int_pin),
             .mode = GPIO_MODE_INPUT,
             .pull_up_en = GPIO_PULLUP_ENABLE,
             .pull_down_en = GPIO_PULLDOWN_DISABLE,
-            .intr_type = GPIO_INTR_POSEDGE,
+            .intr_type = GPIO_INTR_POSEDGE,  // 上升沿触发
         };
         gpio_config(&io_conf);
         gpio_install_isr_service(0);
         
         if (isr_handler) {
             gpio_isr_handler_add(int_pin, isr_handler, isr_arg);
-            ESP_LOGI(TAG, "MPU6050 interrupt enabled on GPIO%d", int_pin);
+            ESP_LOGI(TAG, "ESP32 GPIO interrupt enabled on GPIO%d", int_pin);
         }
+    } else {
+        ESP_LOGI(TAG, "MPU6050 interrupt not used (polling mode)");
     }
     
     ESP_LOGI(TAG, "MPU6050 initialization complete");
 }
+
+
 
 /**
  * @brief  向MPU6050指定寄存器写入数据

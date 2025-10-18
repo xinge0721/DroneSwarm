@@ -4,13 +4,19 @@
 #include "driver/gpio.h"
 #include "../../Hardware/IIC/IIC.h"
 #include "../../Hardware/TIME/TIME.h"
+#include "../../Hardware/MPU6050/MPU6050.h"
+#include "sys_err.h"
 // ============ 公共参数 ============
 extern IIC iic;
 
-extern TIME time;
-
+extern MPU6050* mpu6050;  // 使用指针，避免全局对象初始化顺序问题
+extern int16_t AccX, AccY, AccZ, GyroX, GyroY, GyroZ;
+extern float Temperature;
+extern volatile uint32_t interrupt_count;  // 中断计数器
+extern volatile bool mpu6050_data_ready;   // 数据就绪标志（ISR设置，任务读取）
 // ============ 系统初始化 ============
-void sys_init();
+int system_init(void);
+void mpu6050_Interrupt_function(void* arg);
 
 // ============ 宏定义 ============
 // ============ 输出引脚 ============

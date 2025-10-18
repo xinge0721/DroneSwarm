@@ -2,82 +2,163 @@
 
 static const char *TAG = "TIME";
 
-// 全局TIME实例指针，用于中断回调
-static TIME* timer_instance = nullptr;
-
-// ================ 定时器中断服务程序 ================
-void IRAM_ATTR timer_isr(void) {
+// ================ 定时器报警回调函数 ================
+static bool IRAM_ATTR timer_alarm_callback(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx) {
+    TIME *timer_instance = (TIME *)user_ctx;
+    
     if (timer_instance) {
-        timer_instance->timer_flag = true;    // 设置中断标志
-        timer_instance->timer_count++;        // 计数器自增
+        timer_instance->timer_flag = true;
+        timer_instance->timer_count++;
         
-        // 调用用户回调函数（如果已设置）
         if (timer_instance->callback_function) {
             timer_instance->callback_function();
         }
     }
+    
+    return false;
 }
 
-//  ================ 构造函数（自动初始化） ================
-TIME::TIME(timer_callback_t callback)
+//  ================ 构造函数 ================
+TIME::TIME(timer_callback_t callback, uint32_t period_us)
 {
-    timer_handle = NULL;
+    timer_handle = nullptr;
     timer_flag = false;
     timer_count = 0;
     is_initialized = false;
-    callback_function = callback;  // 设置用户传入的回调函数
-    timer_instance = this;  // 设置全局实例指针
+    is_running = false;
+    callback_function = callback;
+    timer_period_us = period_us;
+    timer_frequency_hz = (period_us > 0) ? (1000000 / period_us) : 0;
+}
+
+//  ================ 析构函数 ================
+TIME::~TIME()
+{
+    if (is_initialized) {
+        if (is_running) {
+            gptimer_stop(timer_handle);
+        }
+        gptimer_disable(timer_handle);
+        gptimer_del_timer(timer_handle);
+    }
+}
+
+//  ================ 初始化定时器 ================
+bool TIME::init(timer_config_st *config)
+{
+    if (is_initialized) {
+        return true;
+    }
     
-    ESP_LOGI(TAG, "开始初始化定时器 - 10ms中断");
+    if (config != nullptr) {
+        timer_period_us = config->timer_period_us;
+        timer_frequency_hz = (timer_period_us > 0) ? (1000000 / timer_period_us) : 0;
+        if (config->callback != nullptr) {
+            callback_function = config->callback;
+        }
+    }
     
-    // 创建定时器
-    // 参数：定时器组(0), 分频器(80), 计数向上(true)
-    timer_handle = timerBegin(0, 80, true);
+    gptimer_config_t timer_config = {
+        .clk_src = GPTIMER_CLK_SRC_DEFAULT,
+        .direction = GPTIMER_COUNT_UP,
+        .resolution_hz = 1000000,
+        .intr_priority = 0,
+    };
     
-    // 绑定中断服务程序
-    timerAttachInterrupt(timer_handle, &timer_isr, true);
+    esp_err_t ret = gptimer_new_timer(&timer_config, &timer_handle);
+    if (ret != ESP_OK) {
+        return false;
+    }
     
-    // 设置定时时间：10000微秒 = 10ms
-    // 参数：定时器对象, 时间(微秒), 重复触发(true)
-    timerAlarmWrite(timer_handle, 10000, true);
+    gptimer_event_callbacks_t cbs = {
+        .on_alarm = timer_alarm_callback,
+    };
+    ret = gptimer_register_event_callbacks(timer_handle, &cbs, this);
+    if (ret != ESP_OK) {
+        gptimer_del_timer(timer_handle);
+        return false;
+    }
+    
+    ret = gptimer_enable(timer_handle);
+    if (ret != ESP_OK) {
+        gptimer_del_timer(timer_handle);
+        return false;
+    }
+    
+    gptimer_alarm_config_t alarm_config = {
+        .alarm_count = timer_period_us,
+        .reload_count = 0,
+        .flags = {
+            .auto_reload_on_alarm = true,
+        }
+    };
+    ret = gptimer_set_alarm_action(timer_handle, &alarm_config);
+    if (ret != ESP_OK) {
+        gptimer_disable(timer_handle);
+        gptimer_del_timer(timer_handle);
+        return false;
+    }
     
     is_initialized = true;
-    ESP_LOGI(TAG, "定时器初始化完成 - 频率: 100Hz");
-    
-    if (callback_function) {
-        ESP_LOGI(TAG, "回调函数已在构造时设置");
-    }
+    return true;
 }
 
 //  ================ 启动定时器 ================
-void TIME::start()
+bool TIME::start()
 {
     if (!is_initialized) {
-        ESP_LOGE(TAG, "定时器未初始化");
-        return;
+        return false;
     }
     
-    timerAlarmEnable(timer_handle);
-    ESP_LOGI(TAG, "定时器已启动");
+    if (is_running) {
+        return true;
+    }
+    
+    esp_err_t ret = gptimer_start(timer_handle);
+    if (ret != ESP_OK) {
+        return false;
+    }
+    
+    is_running = true;
+    return true;
 }
 
 //  ================ 停止定时器 ================
-void TIME::stop()
+bool TIME::stop()
 {
     if (!is_initialized) {
-        ESP_LOGE(TAG, "定时器未初始化");
-        return;
+        return false;
     }
     
-    timerAlarmDisable(timer_handle);
-    ESP_LOGI(TAG, "定时器已停止");
+    if (!is_running) {
+        return true;
+    }
+    
+    esp_err_t ret = gptimer_stop(timer_handle);
+    if (ret != ESP_OK) {
+        return false;
+    }
+    
+    is_running = false;
+    return true;
+}
+
+//  ================ 暂停定时器 ================
+bool TIME::pause()
+{
+    return stop();
+}
+
+//  ================ 恢复定时器 ================
+bool TIME::resume()
+{
+    return start();
 }
 
 //  ================ 重置计数器 ================
 void TIME::reset_count()
 {
     timer_count = 0;
-    ESP_LOGI(TAG, "计数器已重置");
 }
 
 //  ================ 获取计数值 ================
@@ -86,16 +167,88 @@ unsigned long TIME::get_count()
     return timer_count;
 }
 
+//  ================ 清除标志 ================
+void TIME::clear_flag()
+{
+    timer_flag = false;
+}
+
+//  ================ 设置周期（微秒） ================
+bool TIME::set_period_us(uint32_t period_us)
+{
+    if (!is_initialized) {
+        timer_period_us = period_us;
+        timer_frequency_hz = (period_us > 0) ? (1000000 / period_us) : 0;
+        return true;
+    }
+    
+    bool was_running = is_running;
+    
+    if (was_running) {
+        stop();
+    }
+    
+    timer_period_us = period_us;
+    timer_frequency_hz = (period_us > 0) ? (1000000 / period_us) : 0;
+    
+    gptimer_alarm_config_t alarm_config = {
+        .alarm_count = timer_period_us,
+        .reload_count = 0,
+        .flags = {
+            .auto_reload_on_alarm = true,
+        }
+    };
+    esp_err_t ret = gptimer_set_alarm_action(timer_handle, &alarm_config);
+    if (ret != ESP_OK) {
+        return false;
+    }
+    
+    if (was_running) {
+        start();
+    }
+    
+    return true;
+}
+
+//  ================ 获取周期（微秒） ================
+uint32_t TIME::get_period_us()
+{
+    return timer_period_us;
+}
+
+//  ================ 获取频率（Hz） ================
+uint32_t TIME::get_frequency_hz()
+{
+    return timer_frequency_hz;
+}
+
 //  ================ 设置回调函数 ================
 void TIME::set_callback(timer_callback_t callback)
 {
     callback_function = callback;
-    ESP_LOGI(TAG, "回调函数已设置");
 }
 
 //  ================ 移除回调函数 ================
 void TIME::remove_callback()
 {
     callback_function = nullptr;
-    ESP_LOGI(TAG, "回调函数已移除");
 }
+
+//  ================ 检查是否初始化 ================
+bool TIME::is_init()
+{
+    return is_initialized;
+}
+
+//  ================ 检查是否运行中 ================
+bool TIME::is_active()
+{
+    return is_running;
+}
+
+//  ================ 获取定时器句柄 ================
+gptimer_handle_t TIME::get_handle()
+{
+    return timer_handle;
+}
+

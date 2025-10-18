@@ -8,7 +8,9 @@
 #include "../Hardware/WIFI/WIFI.h"
 #include "../Hardware/UDP/UDP.h"
 #include "../Hardware/IIC/IIC.h"
-
+#include "../Hardware/MPU6050/MPU6050.h"
+#include "../System/delay/delay.h"
+#include "../System/sys/sys.h"
 // 定义TAG
 static const char *TAG = "MAIN";
 

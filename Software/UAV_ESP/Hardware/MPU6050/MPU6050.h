@@ -4,6 +4,18 @@
 #include "esp_err.h"
 #include "driver/i2c.h"
 #include "driver/gpio.h"
+#include "../System/delay/delay.h"
+
+struct MPU6050_date
+{
+    int16_t AccX;
+    int16_t AccY;
+    int16_t AccZ;
+    int16_t GyroX;
+    int16_t GyroY;
+    int16_t GyroZ;
+    float Temperature;
+};
 
 /**
  * @brief MPU6050六轴传感器驱动类
